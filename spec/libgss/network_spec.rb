@@ -72,4 +72,14 @@ describe Libgss::Network do
     its(:status){ should == Libgss::ActionRequest::STATUS_PREPARING }
   end
 
+  describe "#inspect" do
+    it "doesn't contain @httpclient" do
+      network.inspect.should_not =~ /@httpclient/
+    end
+
+    it "isn't too long" do
+      network.inspect.length.should < 200
+    end
+  end
+
 end

@@ -1,6 +1,10 @@
 # Libgss
 
-TODO: Write a gem description
+Network library for Groovenauts GSS.
+
+Usually game developers use other network libraries built in each environment,
+but can use this network library in oder to write test script about Stored Script
+which is server side script in GSS.
 
 ## Installation
 
@@ -18,7 +22,8 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+
+
 
 ## Contributing
 

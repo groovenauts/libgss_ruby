@@ -44,6 +44,12 @@ module Libgss
       @httpclient.ssl_config.verify_mode = nil # 自己署名の証明書をOKにする
     end
 
+    def inspect
+      r = "#<#{self.class.name}:#{self.object_id} "
+      fields = (instance_variables - [:@httpclient]).map{|f| "#{f}: #{instance_variable_get(f)}"}
+      r << fields.join(", ") << ">"
+    end
+
     def login
       raise "player_id is not set." if player_id.nil? || player_id.empty?
       res = @httpclient.post(login_url, "player[id]" => player_id)
