@@ -1,26 +1,34 @@
-# Libgss
+# libgss-ruby
 
-Network library for Groovenauts GSS.
+libgss-rubyはGroovenautsのGSS用通信ライブラリです。
 
-Usually game developers use other network libraries built in each environment,
-but can use this network library in oder to write test script about Stored Script
-which is server side script in GSS.
+通常、GSSと通信するためには、直接HTTPのAPIをコールするか、それぞれの環境に合わせた
+通信ライブラリを用いる必要があります。
 
-## Installation
+しかしこのlibgss-rubyとRSpecやminitestなどを組み合わせることによって、GSSにおける
+サーバーサイドスクリプトであるストアドスクリプトのユニットテストを記述することが
+できます。
 
-Add this line to your application's Gemfile:
+## インストール方法
+
+### bundlerを使う方法
+
+アプリケーションのGemfileに以下の行を追加します:
 
     gem 'libgss'
 
-And then execute:
+以下の行を実行します:
 
     $ bundle
 
-Or install it yourself as:
+
+### 手動でインストールする方法
+
+手動で以下のコマンドを実行してインストールできます:
 
     $ gem install libgss
 
-## Usage
+## irbでの使用方法
 
     $ irb -r libgss
     
@@ -45,3 +53,5 @@ Or install it yourself as:
     >> 
     ?> req1.outputs.get(1)
     => {"result"=>"You don't have enough item", "id"=>1}
+
+

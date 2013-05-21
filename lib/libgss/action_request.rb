@@ -30,6 +30,12 @@ module Libgss
       @action_id = 0;
     end
 
+    def inspect
+      r = "#<#{self.class.name}:#{self.object_id} "
+      fields = (instance_variables - [:@httpclient]).map{|f| "#{f}=#{instance_variable_get(f).inspect}"}
+      r << fields.join(", ") << ">"
+    end
+
     def next_action_id
       @action_id += 1
     end

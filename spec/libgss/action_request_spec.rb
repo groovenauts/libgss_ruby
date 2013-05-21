@@ -154,6 +154,14 @@ describe Libgss::ActionRequest do
       end
 
 
+      it "outputs is an Enumerable" do
+        request.get_by_player.with(ACITON_ID_PLAYER)
+        request.server_time.with(ACITON_ID_SERVER_TIME)
+        request.get_by_game_data.with(ACITON_ID_GAME_DATA) # withメソッドで短く書くこともできます。
+        request.send_request
+        request.outputs.map{|r| r["id"]}.should == [ACITON_ID_PLAYER, ACITON_ID_SERVER_TIME, ACITON_ID_GAME_DATA]
+      end
+
     end
   end
 
