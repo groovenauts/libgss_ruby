@@ -24,8 +24,11 @@ module Libgss
     attr_accessor :public_asset_url_suffix
 
 
-    DEFAULT_HTTP_PORT = (ENV['DEFAULT_HTTP_PORT'] || 80).to_i
+    DEFAULT_HTTP_PORT  = (ENV['DEFAULT_HTTP_PORT' ] ||  80).to_i
     DEFAULT_HTTPS_PORT = (ENV['DEFAULT_HTTPS_PORT'] || 443).to_i
+
+    TEST_HTTP_PORT  = 3000
+    TEST_HTTPS_PORT = 3001
 
     def initialize(base_url_or_host, options = {})
       @ssl_disabled = options.delete(:ssl_disabled)
@@ -86,7 +89,7 @@ module Libgss
 
     def build_https_url(uri)
       uri.scheme = "https"
-      uri.port = DEFAULT_HTTPS_PORT
+      uri.port = (uri.port == TEST_HTTP_PORT) ? TEST_HTTPS_PORT : DEFAULT_HTTPS_PORT
       uri.to_s
     end
 
