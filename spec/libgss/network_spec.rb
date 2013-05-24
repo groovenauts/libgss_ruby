@@ -3,12 +3,39 @@ require 'spec_helper'
 describe Libgss::Network do
 
   let(:network) do
-    network = Libgss::Network.new("http://localhost:3000")
-    network.player_id = "1000001"
-    network
+    Libgss::Network.new("http://localhost:3000")
+  end
+
+  describe "#registration" do
+    context "valid" do
+      it do
+        network.player_id.should == nil
+        network.register
+        network.player_id.should_not == nil
+      end
+    end
+  end
+
+  describe "#setup" do
+    context "valid" do
+      it do
+        network.player_id.should == nil
+        network.auth_token.should == nil
+        network.signature_key.should == nil
+        res = network.setup
+        network.player_id.should_not == nil
+        network.auth_token.should_not == nil
+        network.signature_key.should_not == nil
+        res.should == true
+      end
+    end
   end
 
   describe "#login" do
+    before do
+      network.player_id = "1000001"
+    end
+
     context "success" do
       shared_examples_for "Libgss::Network#login success" do |block|
         before(&block)

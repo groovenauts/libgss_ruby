@@ -53,24 +53,26 @@ module Libgss
       r << fields.join(", ") << ">"
     end
 
+    def register
+      res = @httpclient.post(registration_url)
+      process_json_response(res) do |obj|
+        self.player_id = obj["player_id"]
+        !!self.player_id
+      end
+    end
+
     def login
       raise "player_id is not set." if player_id.nil? || player_id.empty?
       res = @httpclient.post(login_url, "player[id]" => player_id)
-      case res.status
-      when 200...300 then # OK
-      when 300...400 then return false # リダイレクト対応はしません
-      when 400...500 then return false
-      when 500...600 then return false
-      else raise "invalid http status: #{res.status}"
+      process_json_response(res) do |obj|
+        @auth_token = obj["auth_token"]
+        @signature_key = obj["signature_key"]
+        !!@auth_token && !!@signature_key
       end
-      begin
-        obj = JSON.parse(res.content)
-      rescue JSON::ParserError => e
-        return false
-      end
-      @auth_token = obj["auth_token"]
-      @signature_key = obj["signature_key"]
-      true
+    end
+
+    def setup
+      register && login
     end
 
     def new_action_request
@@ -87,10 +89,30 @@ module Libgss
 
     private
 
+    def process_json_response(res)
+      case res.status
+      when 200...300 then # OK
+      when 300...400 then return false # リダイレクト対応はしません
+      when 400...500 then return false
+      when 500...600 then return false
+      else raise "invalid http status: #{res.status}"
+      end
+      begin
+        obj = JSON.parse(res.content)
+        return yield(obj)
+      rescue JSON::ParserError => e
+        return false
+      end
+    end
+
     def build_https_url(uri)
       uri.scheme = "https"
       uri.port = (uri.port == TEST_HTTP_PORT) ? TEST_HTTPS_PORT : DEFAULT_HTTPS_PORT
       uri.to_s
+    end
+
+    def registration_url
+      @registration_url ||= ssl_base_url + "/platforms/#{platform}/registration.json"
     end
 
     def login_url
