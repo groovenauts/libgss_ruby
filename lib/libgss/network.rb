@@ -72,7 +72,7 @@ module Libgss
     end
 
     def setup
-      register && login
+      (load_player_id || register) && login
     end
 
     def new_action_request
@@ -88,6 +88,18 @@ module Libgss
     end
 
     private
+
+    # ストレージからplayer_idをロードします
+    # 保存されていたらtrueを、保存されていなかったらfalseを返します。
+    #
+    # ストレージは、cocos2d-x ならば CCUserDefault のようにデータを永続化するものを指します。
+    #     http://www.cocos2d-x.org/reference/native-cpp/d0/d79/classcocos2d_1_1_c_c_user_default.html
+    #
+    # ただし、libgss-rubyはテスト用なので毎回違うplayer_idを使います。
+    # もし保存したい場合は、別途ファイルなどに記録してください。
+    def load_player_id
+      return false
+    end
 
     def process_json_response(res)
       case res.status
