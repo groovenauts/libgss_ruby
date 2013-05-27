@@ -12,6 +12,7 @@ describe Libgss::Network do
         network.player_id.should == nil
         network.register
         network.player_id.should_not == nil
+        network.player_id.should_not =~ /^fontana:/
       end
     end
   end
@@ -24,6 +25,7 @@ describe Libgss::Network do
         network.signature_key.should == nil
         res = network.setup
         network.player_id.should_not == nil
+        network.player_id.should_not =~ /^fontana:/
         network.auth_token.should_not == nil
         network.signature_key.should_not == nil
         res.should == true
@@ -51,10 +53,29 @@ describe Libgss::Network do
       end
 
       it_should_behave_like "Libgss::Network#login success", Proc.new{ network.player_id = "1000001" }
-      it_should_behave_like "Libgss::Network#login success", Proc.new{ network.player_id = "unregistered" }
+      # it_should_behave_like "Libgss::Network#login success", Proc.new{ network.player_id = "unregistered" }
     end
 
     context "failure" do
+      it "unregistered (maybe invalid) player_id" do
+        network.player_id = "unregistered"
+        network.auth_token.should == nil
+        network.signature_key.should == nil
+        res = network.login
+        network.auth_token.should == nil
+        network.signature_key.should == nil
+        res.should == false
+      end
+
+      it "nil player_id" do
+        network.player_id = nil
+        expect{
+          network.login
+        }.to raise_error(/player_id/)
+      end
+    end
+
+    context "error" do
       shared_examples_for "Libgss::Network#login failure" do
         it do
           network.auth_token.should == nil

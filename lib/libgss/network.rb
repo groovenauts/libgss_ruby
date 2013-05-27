@@ -56,7 +56,7 @@ module Libgss
     def register
       res = @httpclient.post(registration_url)
       process_json_response(res) do |obj|
-        self.player_id = obj["player_id"]
+        self.player_id = obj["player_id"].sub(/\Afontana:/, '')
         !!self.player_id
       end
     end
