@@ -62,9 +62,9 @@ module Libgss
     end
 
     def login
-      raise "player_id is not set." if player_id.nil? || player_id.empty?
       res = @httpclient.post(login_url, "player[id]" => player_id)
       process_json_response(res) do |obj|
+        @player_id ||= obj["player_id"]
         @auth_token = obj["auth_token"]
         @signature_key = obj["signature_key"]
         !!@auth_token && !!@signature_key

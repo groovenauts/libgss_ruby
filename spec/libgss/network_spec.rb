@@ -39,8 +39,9 @@ describe Libgss::Network do
     end
 
     context "success" do
-      shared_examples_for "Libgss::Network#login success" do |block|
+      shared_examples_for "Libgss::Network#login success" do |block, after_block = nil|
         before(&block)
+        after(&after_block) if after_block
 
         it do
           network.auth_token.should == nil
@@ -54,6 +55,11 @@ describe Libgss::Network do
 
       it_should_behave_like "Libgss::Network#login success", Proc.new{ network.player_id = "1000001" }
       # it_should_behave_like "Libgss::Network#login success", Proc.new{ network.player_id = "unregistered" }
+
+      it_should_behave_like "Libgss::Network#login success",
+        Proc.new{ network.player_id = nil },
+        Proc.new{ network.player_id.should_not == nil }
+
     end
 
     context "failure" do
@@ -65,13 +71,6 @@ describe Libgss::Network do
         network.auth_token.should == nil
         network.signature_key.should == nil
         res.should == false
-      end
-
-      it "nil player_id" do
-        network.player_id = nil
-        expect{
-          network.login
-        }.to raise_error(/player_id/)
       end
     end
 
