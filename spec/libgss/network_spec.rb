@@ -3,15 +3,45 @@ require 'spec_helper'
 describe Libgss::Network do
 
   let(:network) do
-    network = Libgss::Network.new("http://localhost:3000")
-    network.player_id = "1000001"
-    network
+    Libgss::Network.new("http://localhost:3000")
+  end
+
+  describe "#registration" do
+    context "valid" do
+      it do
+        network.player_id.should == nil
+        network.register
+        network.player_id.should_not == nil
+        network.player_id.should_not =~ /^fontana:/
+      end
+    end
+  end
+
+  describe "#setup" do
+    context "valid" do
+      it do
+        network.player_id.should == nil
+        network.auth_token.should == nil
+        network.signature_key.should == nil
+        res = network.setup
+        network.player_id.should_not == nil
+        network.player_id.should_not =~ /^fontana:/
+        network.auth_token.should_not == nil
+        network.signature_key.should_not == nil
+        res.should == true
+      end
+    end
   end
 
   describe "#login" do
+    before do
+      network.player_id = "1000001"
+    end
+
     context "success" do
-      shared_examples_for "Libgss::Network#login success" do |block|
+      shared_examples_for "Libgss::Network#login success" do |block, after_block = nil|
         before(&block)
+        after(&after_block) if after_block
 
         it do
           network.auth_token.should == nil
@@ -24,10 +54,27 @@ describe Libgss::Network do
       end
 
       it_should_behave_like "Libgss::Network#login success", Proc.new{ network.player_id = "1000001" }
-      it_should_behave_like "Libgss::Network#login success", Proc.new{ network.player_id = "unregistered" }
+      # it_should_behave_like "Libgss::Network#login success", Proc.new{ network.player_id = "unregistered" }
+
+      it_should_behave_like "Libgss::Network#login success",
+        Proc.new{ network.player_id = nil },
+        Proc.new{ network.player_id.should_not == nil }
+
     end
 
     context "failure" do
+      it "unregistered (maybe invalid) player_id" do
+        network.player_id = "unregistered"
+        network.auth_token.should == nil
+        network.signature_key.should == nil
+        res = network.login
+        network.auth_token.should == nil
+        network.signature_key.should == nil
+        res.should == false
+      end
+    end
+
+    context "error" do
       shared_examples_for "Libgss::Network#login failure" do
         it do
           network.auth_token.should == nil
