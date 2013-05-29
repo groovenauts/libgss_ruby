@@ -9,7 +9,7 @@ describe Libgss::ActionRequest do
   let(:network) do
     network = Libgss::Network.new("http://localhost:3000")
     network.player_id = "1000001"
-    network.login
+    network.login.should == true
     network
   end
 
