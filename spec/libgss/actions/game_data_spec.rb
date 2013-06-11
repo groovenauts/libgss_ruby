@@ -4,7 +4,7 @@ require 'spec_helper'
 describe Libgss::ActionRequest do
 
   let(:network) do
-    network = Libgss::Network.new("http://localhost:3000")
+    network = new_network
     network.player_id = "1000001"
     network.login
     network

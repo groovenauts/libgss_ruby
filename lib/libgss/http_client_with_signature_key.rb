@@ -10,20 +10,28 @@ module Libgss
       @impl, @network = impl, network
     end
 
-    def post(uri, body, header, &block)
+    def post(uri, body, original_headers = {}, &block)
       headers = {
-        "oauth_consumer_key" => network.consumer_key,
+        "oauth_consumer_key" => network.consumer_key || "",
         "oauth_token"        => network.auth_token,
+      }.update(original_headers)
+      oauth_params = {
+        "body" => body,
+        "oauth_signature_method" => "HMAC-SHA1"
+      }.update(headers)
+
+      req_hash = {
+        "method" => "POST",
+        "uri"    => uri,
+        "parameters" => oauth_params
       }
-      request = OAuth::RequestProxy.proxy(
-        "method" => "post",
-        "uri"    => url
-        "parameters" => {"body" => body}.update(headers))
-      headers["oauth_signatrue"] = OAuth::Signature.sign(
+
+      request = OAuth::RequestProxy.proxy(req_hash)
+      headers["oauth_signature"] = OAuth::Signature.sign(
         request,
         :consumer_secret => network.consumer_secret,
         :token_secret    => network.signature_key)
-      res = @impl.post(url, body, headers)
+      res = @impl.post(uri, body, headers)
     end
   end
 end

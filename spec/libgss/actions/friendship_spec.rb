@@ -4,8 +4,7 @@ require 'spec_helper'
 describe "Libgss::ActionRequest friendship" do
 
   let(:network) do
-    network = Libgss::Network.new("http://localhost:3000")
-    network.player_id = "1000001"
+    network = new_network
     network.login
     network
   end

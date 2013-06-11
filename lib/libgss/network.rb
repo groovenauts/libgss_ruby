@@ -48,10 +48,10 @@ module Libgss
       @platform = "fontana"
 
       @consumer_secret = options[:consumer_secret] || ENV["CONSUMER_SECRET"]
+      @ignore_signature_key = !!options[:ignore_signature_key]
 
       @httpclient = HTTPClient.new
       @httpclient.ssl_config.verify_mode = nil # 自己署名の証明書をOKにする
-      @ignore_signature_key = !!options[:ignore_signature_key]
     end
 
     def inspect
