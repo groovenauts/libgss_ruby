@@ -17,6 +17,9 @@ module Libgss
 
     attr_reader :auth_token, :signature_key
 
+    attr_accessor :consumer_secret
+    attr_accessor :consumer_key
+
     attr_accessor :api_version
     attr_accessor :platform
     attr_accessor :player_id
@@ -43,6 +46,10 @@ module Libgss
       end
       @ssl_base_url = @base_url if @ssl_disabled
       @platform = "fontana"
+
+      @consumer_secret = options[:consumer_secret] || ENV["CONSUMER_SECRET"]
+      @ignore_signature_key = !!options[:ignore_signature_key]
+
       @httpclient = HTTPClient.new
       @httpclient.ssl_config.verify_mode = nil # 自己署名の証明書をOKにする
     end
@@ -51,14 +58,6 @@ module Libgss
       r = "#<#{self.class.name}:#{self.object_id} "
       fields = (instance_variables - [:@httpclient]).map{|f| "#{f}=#{instance_variable_get(f).inspect}"}
       r << fields.join(", ") << ">"
-    end
-
-    def register
-      res = @httpclient.post(registration_url)
-      process_json_response(res) do |obj|
-        self.player_id = obj["player_id"].sub(/\Afontana:/, '')
-        !!self.player_id
-      end
     end
 
     def login
@@ -71,12 +70,17 @@ module Libgss
       end
     end
 
+    def ignore_signature_key?
+      @ignore_signature_key
+    end
+
     def setup
-      (load_player_id || register) && login
+      load_player_id
+      login
     end
 
     def new_action_request
-      ActionRequest.new(@httpclient, action_url)
+      ActionRequest.new(httpclient_for_action, action_url)
     end
 
     def new_public_asset_request(asset_path)
@@ -85,6 +89,12 @@ module Libgss
 
     def new_protected_asset_request(asset_path)
       AssetRequest.new(@httpclient, protected_asset_url(asset_path))
+    end
+
+    def httpclient_for_action
+      @httpclient_for_action ||=
+        @ignore_signature_key ? @httpclient :
+        HttpClientWithSignatureKey.new(@httpclient, self)
     end
 
     private

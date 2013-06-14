@@ -6,17 +6,6 @@ describe Libgss::Network do
     Libgss::Network.new("http://localhost:3000")
   end
 
-  describe "#registration" do
-    context "valid" do
-      it do
-        network.player_id.should == nil
-        network.register
-        network.player_id.should_not == nil
-        network.player_id.should_not =~ /^fontana:/
-      end
-    end
-  end
-
   describe "#setup" do
     context "valid" do
       it do
@@ -25,7 +14,7 @@ describe Libgss::Network do
         network.signature_key.should == nil
         res = network.setup
         network.player_id.should_not == nil
-        network.player_id.should_not =~ /^fontana:/
+        network.player_id.should =~ /^fontana:/
         network.auth_token.should_not == nil
         network.signature_key.should_not == nil
         res.should == true

@@ -24,4 +24,5 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "httpclient"
   spec.add_runtime_dependency "json"
+  spec.add_runtime_dependency "oauth"
 end
