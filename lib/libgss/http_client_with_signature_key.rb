@@ -26,9 +26,8 @@ module Libgss
         "parameters" => oauth_params
       }
 
-      request = OAuth::RequestProxy.proxy(req_hash)
       headers["oauth_signature"] = OAuth::Signature.sign(
-        request,
+        req_hash,
         :consumer_secret => network.consumer_secret,
         :token_secret    => network.signature_key)
       res = @impl.post(uri, body, headers)
