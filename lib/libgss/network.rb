@@ -60,14 +60,6 @@ module Libgss
       r << fields.join(", ") << ">"
     end
 
-    def register
-      res = @httpclient.post(registration_url)
-      process_json_response(res) do |obj|
-        self.player_id = obj["player_id"].sub(/\Afontana:/, '')
-        !!self.player_id
-      end
-    end
-
     def login
       res = @httpclient.post(login_url, "player[id]" => player_id)
       process_json_response(res) do |obj|
@@ -83,7 +75,8 @@ module Libgss
     end
 
     def setup
-      (load_player_id || register) && login
+      load_player_id
+      login
     end
 
     def new_action_request
