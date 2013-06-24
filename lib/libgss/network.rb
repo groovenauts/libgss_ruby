@@ -60,8 +60,10 @@ module Libgss
       r << fields.join(", ") << ">"
     end
 
-    def login
-      res = @httpclient.post(login_url, "player[id]" => player_id)
+    def login(extra = {})
+      attrs = { "player[id]" => player_id }
+      extra.each{|k, v| attrs[ "player[#{k}]" ] = v }
+      res = @httpclient.post(login_url, attrs)
       process_json_response(res) do |obj|
         @player_id ||= obj["player_id"]
         @auth_token = obj["auth_token"]
