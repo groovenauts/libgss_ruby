@@ -114,7 +114,7 @@ describe Libgss::Network do
     end
 
     it "isn't too long" do
-      network.inspect.length.should < 200
+      network.inspect.length.should < 300
     end
   end
 
