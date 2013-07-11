@@ -57,4 +57,10 @@ You can use `gss-server-time` command to test connection like this:
 $ gss-server-time http://localhost:3000 -a path/to/app_garden.yml.erb
 ```
 
+or
+
+```
+$ gss-server-time http://localhost:3000 -p fontana -c <consumer_secret> -i <player_id>
+```
+
 see `gss-server-time --help` for more options

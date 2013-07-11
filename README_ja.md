@@ -70,4 +70,10 @@ $ irb -r libgss
 $ gss-server-time http://localhost:3000 -a path/to/app_garden.yml.erb
 ```
 
+あるいは
+
+```
+$ gss-server-time http://localhost:3000 -p fontana -c <consumer_secret> -i <player_id>
+```
+
 という風に使用します。詳しくは `gss-server-time --help` を参照してください。
