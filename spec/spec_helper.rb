@@ -1,5 +1,6 @@
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'libgss'
+require 'tengine/support/yaml_with_erb'
 
 # see https://github.com/tengine/fontana/pull/3
 require 'httpclient'
@@ -10,8 +11,10 @@ end
 
 
 def new_network(url = "http://localhost:3000", player_id = "1000001")
-  network = Libgss::Network.new(url)
-  network.player_id = player_id
-  network.consumer_secret = "cpqomf5gs4ob6prd5w5zd52yg9du7150"
-  network
+  config = YAML.load_file(File.expand_path("../../fontana_sample/config/app_garden.yml", __FILE__))
+  opts = {
+    consumer_secret: config["consumer_secret"],
+    player_id: player_id
+  }
+  Libgss::Network.new(url, opts)
 end
