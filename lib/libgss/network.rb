@@ -33,6 +33,15 @@ module Libgss
     TEST_HTTP_PORT  = 3000
     TEST_HTTPS_PORT = 3001
 
+    # Libgss::Networkのコンストラクタです。
+    #
+    # @param [String] base_url_or_host 接続先の基準となるURLあるいはホスト名
+    # @param [Hash] options オプション
+    # @option options [String]  :platform 接続先のGSSサーバの認証のプラットフォーム。デフォルトは"fontana"。
+    # @option options [String]  :player_id 接続に使用するプレイヤのID
+    # @option options [String]  :consumer_secret GSSサーバとクライアントの間で行う署名の検証に使用される文字列。
+    # @option options [Boolean] :ssl_disabled SSLを無効にするかどうか。
+    # @option options [Boolean]  :ignore_signature_key シグネチャキーによる署名を行うかどうか
     def initialize(base_url_or_host, options = {})
       @ssl_disabled = options.delete(:ssl_disabled)
       if base_url_or_host =~ URI.regexp
@@ -61,6 +70,12 @@ module Libgss
       r << fields.join(", ") << ">"
     end
 
+
+    # GSSサーバに接続してログインの検証と処理を行います。
+    #
+    # @param [String] base_url_or_host 接続先の基準となるURLあるいはホスト名
+    # @param [Hash] options オプション
+    # @option options [String]  :platform 接続先のGSSサーバの認証のプラットフォーム。デフォルトは"fontana"。
     def login(extra = {})
       attrs = { "player[id]" => player_id }
       extra.each{|k, v| attrs[ "player[#{k}]" ] = v }
