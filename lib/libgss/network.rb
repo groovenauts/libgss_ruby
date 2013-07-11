@@ -45,7 +45,8 @@ module Libgss
         @ssl_base_url = build_https_url(uri)
       end
       @ssl_base_url = @base_url if @ssl_disabled
-      @platform = "fontana"
+      @platform  = options[:platform] || "fontana"
+      @player_id = options[:player_id]
 
       @consumer_secret = options[:consumer_secret] || ENV["CONSUMER_SECRET"]
       @ignore_signature_key = !!options[:ignore_signature_key]

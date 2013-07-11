@@ -8,6 +8,9 @@ module Libgss
 
   class ActionRequest
 
+    class Error < StandardError
+    end
+
     STATUS_PREPARING = 0
     STATUS_SENDING   = 1
     STATUS_WAITING   = 2
@@ -49,10 +52,16 @@ module Libgss
     # アクション群を実行するために実際にHTTPリクエストを送信します。
     def send_request(&callback)
       res = @httpclient.post(action_url, {"inputs" => @actions.map(&:to_hash)}.to_json)
+      case res.code.to_i
+      when 200..299 then # OK
+      else
+        raise Error, "failed to send action request: [#{res.code}] #{res.body}"
+      end
       r = JSON.parse(res.body)
       # puts res.body
       @outputs = Outputs.new(r["outputs"])
       callback.call(@outputs) if callback
+      @outputs
     end
 
     # 条件に該当するデータを取得

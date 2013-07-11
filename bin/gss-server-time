@@ -1,0 +1,65 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+
+# http://doc.ruby-lang.org/ja/1.9.3/library/optparse.html
+# http://qiita.com/torshinor/items/499beaba89eb09df80d5
+require 'optparse'
+
+url = ARGV.detect{|s| s !~ /\A\-/}
+ARGV.delete(url)
+
+default_options = {
+  "platform" => "fontana"
+}
+banner = "%s URL [options]" % File.basename(__FILE__)
+parser = OptionParser.new(banner) do |opt|
+  opt.on '-i', '--player-id PLAYER_ID'
+  opt.on '-p', "--platform #{default_options[:platform]}"
+  opt.on '-c', '--consumer-secret CONSUMER_SECRET'
+  opt.on '-a', '--app-garden-file PATH_TO_APP_GARDEN_FILE'
+  opt.on '-D', '--ssl-disabled'
+  opt.on '-I', '--ignore-signature-key'
+end
+
+unless url
+  puts parser.help
+  exit(1)
+end
+
+options = default_options.merge(parser.getopts(ARGV))
+options = options.each_with_object({}){|(k,v), d| d[k.gsub(/-/, '_').to_sym] = v}
+
+if app_garden_path = options.delete(:app_garden_file)
+  require 'tengine/support/yaml_with_erb'
+  config = YAML.load_file(app_garden_path)
+  options[:consumer_secret] = config["consumer_secret"]
+end
+
+$LOAD_PATH << File.expand_path("../../lib")
+require 'libgss'
+
+begin
+  network = Libgss::Network.new(url, options)
+  options = options.dup
+  options[:consumer_secret] = "<<MASKED>>" if options[:consumer_secret]
+  puts "login on #{url} with #{options.inspect}"
+  unless network.login
+    puts "\e[31mLogin FAILURE!\e[0m"
+    exit!(1)
+  end
+
+  puts "Login success"
+
+  req = network.new_action_request
+  req.server_time
+  req.send_request
+
+  res = req.outputs.first
+  raise "req.outputs is empty: #{req.outputs}" unless res
+
+  puts "server_time: " << Time.at(res["result"]).iso8601
+
+  puts "\e[32mSUCCESS!!\e[0m"
+rescue => e
+  puts "\e[31m[#{e.class}] #{e.message}\e[0m\n  " << e.backtrace.join("\n  ")
+end
