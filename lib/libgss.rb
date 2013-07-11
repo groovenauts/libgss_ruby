@@ -9,6 +9,7 @@ module Libgss
   autoload :HttpClientWithSignatureKey, "libgss/http_client_with_signature_key"
 
   autoload :AssetRequest , "libgss/asset_request"
+  autoload :Fontana      , "libgss/fontana"
 
   class << self
     attr_accessor :use_oauth_gem

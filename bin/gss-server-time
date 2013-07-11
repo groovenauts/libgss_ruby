@@ -29,14 +29,16 @@ end
 options = default_options.merge(parser.getopts(ARGV))
 options = options.each_with_object({}){|(k,v), d| d[k.gsub(/-/, '_').to_sym] = v}
 
-if app_garden_path = options.delete(:app_garden_file)
-  require 'tengine/support/yaml_with_erb'
-  config = YAML.load_file(app_garden_path)
-  options[:consumer_secret] = config["consumer_secret"]
-end
-
 $LOAD_PATH << File.expand_path("../../lib")
 require 'libgss'
+
+if app_garden_path = options.delete(:app_garden_file)
+  Fontana = Libgss::Fontana # ERBを展開する際にFontana.envなどが指定されていた場合に期待する動作をするように別名で定義します。
+  require 'tengine/support/yaml_with_erb'
+  c = YAML.load_file(app_garden_path)
+  options[:platform] = (c["platform"] ? c["platform"]["name"] : nil) || "fontana"
+  options[:consumer_secret] = c["consumer_secret"]
+end
 
 begin
   network = Libgss::Network.new(url, options)
