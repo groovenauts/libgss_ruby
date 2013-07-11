@@ -51,6 +51,7 @@ begin
   end
 
   puts "Login success"
+  puts "player_id: #{network.player_id}"
 
   req = network.new_action_request
   req.server_time
