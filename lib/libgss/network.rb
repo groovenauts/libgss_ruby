@@ -76,6 +76,7 @@ module Libgss
     # @param [String] base_url_or_host 接続先の基準となるURLあるいはホスト名
     # @param [Hash] options オプション
     # @option options [String]  :platform 接続先のGSSサーバの認証のプラットフォーム。デフォルトは"fontana"。
+    # @return [Boolean] ログインに成功した場合はtrue、失敗した場合はfalse
     def login(extra = {})
       attrs = { "player[id]" => player_id }
       extra.each{|k, v| attrs[ "player[#{k}]" ] = v }
