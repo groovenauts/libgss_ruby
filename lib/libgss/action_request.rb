@@ -21,13 +21,14 @@ module Libgss
 
 
     # 読み込みのみ、書き込み不可
-    attr_reader :action_url
+    attr_reader :action_url, :req_headers
     attr_reader :status, :outputs
 
     # コンストラクタ
-    def initialize(httpclient, action_url)
+    def initialize(httpclient, action_url, req_headers)
       @httpclient = httpclient
       @action_url = action_url
+      @req_headers = req_headers
       @status = STATUS_PREPARING
       @actions = []
       @action_id = 0;
@@ -51,7 +52,7 @@ module Libgss
 
     # アクション群を実行するために実際にHTTPリクエストを送信します。
     def send_request(&callback)
-      res = @httpclient.post(action_url, {"inputs" => @actions.map(&:to_hash)}.to_json)
+      res = @httpclient.post(action_url, {"inputs" => @actions.map(&:to_hash)}.to_json, req_headers)
       case res.code.to_i
       when 200..299 then # OK
       else
