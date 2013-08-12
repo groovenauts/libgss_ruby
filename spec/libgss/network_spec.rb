@@ -3,7 +3,8 @@ require 'spec_helper'
 describe Libgss::Network do
 
   let(:network) do
-    Libgss::Network.new("http://localhost:3000")
+    # Libgss::Network.new("http://localhost:3000")
+    new_network
   end
 
   describe "#setup" do

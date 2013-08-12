@@ -1,16 +1,18 @@
 PATH
   remote: .
   specs:
-    libgss (0.2.0)
+    libgss (0.5.0)
       httpclient
       json
+      oauth
 
 GEM
   remote: https://rubygems.org/
   specs:
     diff-lcs (1.2.3)
-    httpclient (2.3.3)
+    httpclient (2.3.4.1)
     json (1.8.0)
+    oauth (0.4.7)
     rake (10.0.4)
     rspec (2.13.0)
       rspec-core (~> 2.13.0)

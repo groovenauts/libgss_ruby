@@ -313,6 +313,15 @@ module Libgss
       add_action(args)
     end
 
+
+    # マスタの差分を取得します
+    # @param [Hash] downloaded_versions キーが対象となるコレクション名、値がそのバージョンを示すHash
+    # @return 差分コレクション毎の差分を示すHashの配列
+    def master_diffs(downloaded_versions)
+      args = {action: "master_diffs", downloaded_versions: downloaded_versions}
+      add_action(args)
+    end
+
   end
 
 end
