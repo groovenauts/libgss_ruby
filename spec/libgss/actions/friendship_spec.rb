@@ -24,8 +24,8 @@ describe "Libgss::ActionRequest friendship" do
       request.outputs.length.should == 1
       result = request.outputs.first["result"]
       result.length.should == 8
-      result[0..6].each{|friendship| friendship["requester_id"].should == "fontana:1000001"}
-      result[7..7].each{|friendship| friendship["accepter_id" ].should == "fontana:1000001"}
+      result[0..6].each{|friendship| friendship["requester_id"].should == "1000001"}
+      result[7..7].each{|friendship| friendship["accepter_id" ].should == "1000001"}
     end
   end
 
@@ -49,7 +49,7 @@ describe "Libgss::ActionRequest friendship" do
           friendships = request.outputs.last["result"]
           friendships.length.should == 8 + (new_data ? 1 : 0)
           friendships.detect{|f|
-            f["requester_id"] == "fontana:1000001" &&
+            f["requester_id"] == "1000001" &&
               f["accepter_id"] == target &&
               f["status_cd"] == status_cd
           }.should_not be_nil
@@ -61,7 +61,7 @@ describe "Libgss::ActionRequest friendship" do
           friendships = request.outputs.last["result"]
           friendships.length.should == 8
           friendships.detect{|f|
-            f["requester_id"] == "fontana:1000001" &&
+            f["requester_id"] == "1000001" &&
             f["accepter_id"] == target
           }.should be_nil
 
@@ -73,12 +73,12 @@ describe "Libgss::ActionRequest friendship" do
           friendships.length.should == 8
           if new_data
             friendships.detect{|f|
-              f["requester_id"] == "fontana:1000001" &&
+              f["requester_id"] == "1000001" &&
               f["accepter_id"] == target
             }.should be_nil
           else
             friendships.detect{|f|
-              f["requester_id"] == "fontana:1000001" &&
+              f["requester_id"] == "1000001" &&
               f["accepter_id"] == target &&
               f["status_cd"] == status_cd
             }.should_not be_nil
@@ -100,38 +100,38 @@ describe "Libgss::ActionRequest friendship" do
 
     # フレンドシップがない初期状態
     context "without friendship" do
-      it_should_behave_like "friendship state transition", "fontana:1000009", :apply   , "OK", FriendshipApplied_r, :new
-      it_should_behave_like "friendship state transition", "fontana:1000009", :approve , "NG", 1003
-      it_should_behave_like "friendship state transition", "fontana:1000009", :breakoff, "IG", nil, :new
-      it_should_behave_like "friendship state transition", "fontana:1000009", :block   , "OK", FriendshipBlocked_r, :new
-      it_should_behave_like "friendship state transition", "fontana:1000009", :unblock , "IG", nil, :new
+      it_should_behave_like "friendship state transition", "1000009", :apply   , "OK", FriendshipApplied_r, :new
+      it_should_behave_like "friendship state transition", "1000009", :approve , "NG", 1003
+      it_should_behave_like "friendship state transition", "1000009", :breakoff, "IG", nil, :new
+      it_should_behave_like "friendship state transition", "1000009", :block   , "OK", FriendshipBlocked_r, :new
+      it_should_behave_like "friendship state transition", "1000009", :unblock , "IG", nil, :new
     end
 
     context "approve" do
-      it_should_behave_like "friendship state transition", "fontana:1000005", :approve , "OK", FriendshipApproved
+      it_should_behave_like "friendship state transition", "1000005", :approve , "OK", FriendshipApproved
     end
 
     context "breakoff" do
-      it_should_behave_like "friendship state transition", "fontana:1000002", :breakoff , "OK", FriendshipDeleted
-      it_should_behave_like "friendship state transition", "fontana:1000003", :breakoff , "OK", FriendshipDeleted
-      it_should_behave_like "friendship state transition", "fontana:1000004", :breakoff , "IG", FriendshipDeleted
-      it_should_behave_like "friendship state transition", "fontana:1000005", :breakoff , "OK", FriendshipDeleted
+      it_should_behave_like "friendship state transition", "1000002", :breakoff , "OK", FriendshipDeleted
+      it_should_behave_like "friendship state transition", "1000003", :breakoff , "OK", FriendshipDeleted
+      it_should_behave_like "friendship state transition", "1000004", :breakoff , "IG", FriendshipDeleted
+      it_should_behave_like "friendship state transition", "1000005", :breakoff , "OK", FriendshipDeleted
     end
 
     context "block" do
-      it_should_behave_like "friendship state transition", "fontana:1000002", :block , "OK", FriendshipBlocked_r
-      it_should_behave_like "friendship state transition", "fontana:1000003", :block , "OK", FriendshipBlocked_r
-      it_should_behave_like "friendship state transition", "fontana:1000004", :block , "OK", FriendshipBlocked_r
-      it_should_behave_like "friendship state transition", "fontana:1000005", :block , "OK", FriendshipBlocked_r
-      it_should_behave_like "friendship state transition", "fontana:1000006", :block , "OK", FriendshipBlocked_r
-      it_should_behave_like "friendship state transition", "fontana:1000007", :block , "OK", FriendshipBlocked_lr
-      it_should_behave_like "friendship state transition", "fontana:1000008", :block , "OK", FriendshipBlocked_lr
+      it_should_behave_like "friendship state transition", "1000002", :block , "OK", FriendshipBlocked_r
+      it_should_behave_like "friendship state transition", "1000003", :block , "OK", FriendshipBlocked_r
+      it_should_behave_like "friendship state transition", "1000004", :block , "OK", FriendshipBlocked_r
+      it_should_behave_like "friendship state transition", "1000005", :block , "OK", FriendshipBlocked_r
+      it_should_behave_like "friendship state transition", "1000006", :block , "OK", FriendshipBlocked_r
+      it_should_behave_like "friendship state transition", "1000007", :block , "OK", FriendshipBlocked_lr
+      it_should_behave_like "friendship state transition", "1000008", :block , "OK", FriendshipBlocked_lr
     end
 
     context "unblock" do
-      it_should_behave_like "friendship state transition", "fontana:1000006", :unblock , "OK", FriendshipDeleted
-      it_should_behave_like "friendship state transition", "fontana:1000007", :unblock , "OK", FriendshipBlocked_l
-      it_should_behave_like "friendship state transition", "fontana:1000008", :unblock , "OK", FriendshipBlocked_l
+      it_should_behave_like "friendship state transition", "1000006", :unblock , "OK", FriendshipDeleted
+      it_should_behave_like "friendship state transition", "1000007", :unblock , "OK", FriendshipBlocked_l
+      it_should_behave_like "friendship state transition", "1000008", :unblock , "OK", FriendshipBlocked_l
     end
   end
 

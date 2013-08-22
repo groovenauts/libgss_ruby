@@ -26,6 +26,8 @@ module Libgss
     attr_accessor :public_asset_url_prefix
     attr_accessor :public_asset_url_suffix
 
+    attr_accessor :client_version
+    attr_accessor :device_type_cd
 
     DEFAULT_HTTP_PORT  = (ENV['DEFAULT_HTTP_PORT' ] ||  80).to_i
     DEFAULT_HTTPS_PORT = (ENV['DEFAULT_HTTPS_PORT'] || 443).to_i
@@ -60,6 +62,9 @@ module Libgss
       @consumer_secret = options[:consumer_secret] || ENV["CONSUMER_SECRET"]
       @ignore_signature_key = !!options[:ignore_signature_key]
 
+      @device_type_cd = options[:device_type_cd]
+      @client_version = options[:client_version]
+
       @httpclient = HTTPClient.new
       @httpclient.ssl_config.verify_mode = nil # 自己署名の証明書をOKにする
     end
@@ -70,6 +75,12 @@ module Libgss
       r << fields.join(", ") << ">"
     end
 
+    def req_headers
+      {
+        "X-Device-Type" => device_type_cd,
+        "X-Client-Version" => client_version,
+      }
+    end
 
     # GSSサーバに接続してログインの検証と処理を行います。
     #
@@ -80,7 +91,7 @@ module Libgss
     def login(extra = {})
       attrs = { "player[id]" => player_id }
       extra.each{|k, v| attrs[ "player[#{k}]" ] = v }
-      res = @httpclient.post(login_url, attrs)
+      res = @httpclient.post(login_url, attrs, req_headers)
       process_json_response(res) do |obj|
         @player_id ||= obj["player_id"]
         @auth_token = obj["auth_token"]
@@ -99,15 +110,15 @@ module Libgss
     end
 
     def new_action_request
-      ActionRequest.new(httpclient_for_action, action_url)
+      ActionRequest.new(httpclient_for_action, action_url, req_headers)
     end
 
     def new_public_asset_request(asset_path)
-      AssetRequest.new(@httpclient, public_asset_url(asset_path))
+      AssetRequest.new(@httpclient, public_asset_url(asset_path), req_headers)
     end
 
     def new_protected_asset_request(asset_path)
-      AssetRequest.new(@httpclient, protected_asset_url(asset_path))
+      AssetRequest.new(@httpclient, protected_asset_url(asset_path), req_headers)
     end
 
     def httpclient_for_action

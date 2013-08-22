@@ -53,7 +53,7 @@ describe Libgss::ActionRequest do
 
 
   expected_player_1000001 = {
-    "player_id"=>"fontana:1000001",
+    "player_id"=>"1000001",
     "nickname"=>nil,
     "level"=>1,
     "first_login_at"=> Time.parse("2012/7/15 21:50+09:00").to_i, # 1342356600,
