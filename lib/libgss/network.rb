@@ -43,7 +43,9 @@ module Libgss
     # @option options [String]  :player_id 接続に使用するプレイヤのID
     # @option options [String]  :consumer_secret GSSサーバとクライアントの間で行う署名の検証に使用される文字列。
     # @option options [Boolean] :ssl_disabled SSLを無効にするかどうか。
-    # @option options [Boolean]  :ignore_signature_key シグネチャキーによる署名を行うかどうか
+    # @option options [Boolean] :ignore_signature_key シグネチャキーによる署名を行うかどうか
+    # @option options [Integer] :device_type_cd GSS/fontanaに登録されたデバイス種別
+    # @option options [String]  :client_version GSS/fontanaに登録されたクライアントリリースのバージョン
     def initialize(base_url_or_host, options = {})
       @ssl_disabled = options.delete(:ssl_disabled)
       if base_url_or_host =~ URI.regexp
