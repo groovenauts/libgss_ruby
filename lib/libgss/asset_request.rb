@@ -10,18 +10,19 @@ module Libgss
     STATUS_ERROR     = 5
     STATUS_TIMEOUT   = 6
 
-    attr_reader :url, :status, :response_data
+    attr_reader :url, :req_headers, :status, :response_data
 
     # コンストラクタ
-    def initialize(httpclient, url)
+    def initialize(httpclient, url, req_headers)
       @httpclient = httpclient
       @url = url
+      @req_headers = req_headers
       @response_data = nil
       @status = STATUS_PREPARING
     end
 
     def send_request(&callback)
-      res = @httpclient.get(url)
+      res = @httpclient.get(url, nil, req_headers)
       @response_data = res.body
       callback.call(@response_data) if callback
     end
