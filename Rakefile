@@ -32,13 +32,13 @@ task :test do
     raise "#{sample_dir} is empty. You have to do `git submodule update --init` before `rake test`"
   end
 
-  fileutils.chdir(sample_dir){ system!("rake vendor:fontana:reset servers:start") }
+  fileutils.chdir(sample_dir){ system!("rake test:servers:start") }
   begin
     fileutils.chdir(__dir__) do
       Rake::Task["spec"].execute
     end
   ensure
-    fileutils.chdir(sample_dir){ system!("rake servers:stop") }
+    fileutils.chdir(sample_dir){ system!("rake test:servers:stop") }
   end
 
   # 最後の子プロセスの終了ステータスで終了します

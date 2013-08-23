@@ -8,7 +8,7 @@ describe "Libgss::AssetRequest" do
 
   let(:network) do
     network = new_network
-    network.public_asset_url_prefix = "http://localhost:3000/a/"
+    network.public_asset_url_prefix = "http://localhost:4000/a/"
     network.login
     network
   end
