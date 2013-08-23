@@ -29,11 +29,11 @@ module Libgss
     attr_accessor :client_version
     attr_accessor :device_type_cd
 
+    PRODUCTION_HTTP_PORT  =  80
+    PRODUCTION_HTTPS_PORT = 443
+
     DEFAULT_HTTP_PORT  = (ENV['DEFAULT_HTTP_PORT' ] ||  80).to_i
     DEFAULT_HTTPS_PORT = (ENV['DEFAULT_HTTPS_PORT'] || 443).to_i
-
-    TEST_HTTP_PORT  = 3000
-    TEST_HTTPS_PORT = 3001
 
     # Libgss::Networkのコンストラクタです。
     #
@@ -91,6 +91,8 @@ module Libgss
     # @option options [String]  :platform 接続先のGSSサーバの認証のプラットフォーム。デフォルトは"fontana"。
     # @return [Boolean] ログインに成功した場合はtrue、失敗した場合はfalse
     def login(extra = {})
+      retry_count = 0
+      begin
       attrs = { "player[id]" => player_id }
       extra.each{|k, v| attrs[ "player[#{k}]" ] = v }
       res = @httpclient.post(login_url, attrs, req_headers)
@@ -99,6 +101,13 @@ module Libgss
         @auth_token = obj["auth_token"]
         @signature_key = obj["signature_key"]
         !!@auth_token && !!@signature_key
+      end
+      rescue OpenSSL::SSL::SSLError => e
+        $stderr.puts("retrying login [#{e.class.name}] #{e.message}")
+        sleep(0.2)
+        retry_count += 1
+        retry if retry_count > 3
+        raise e
       end
     end
 
@@ -161,7 +170,7 @@ module Libgss
 
     def build_https_url(uri)
       uri.scheme = "https"
-      uri.port = (uri.port == TEST_HTTP_PORT) ? TEST_HTTPS_PORT : DEFAULT_HTTPS_PORT
+      uri.port = (uri.port == PRODUCTION_HTTP_PORT) ? PRODUCTION_HTTPS_PORT : uri.port + 1
       uri.to_s
     end
 
