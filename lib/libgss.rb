@@ -16,4 +16,23 @@ module Libgss
   end
 
   self.use_oauth_gem = (ENV["USE_OAUTH_GEM"] =~ /\Atrue\Z|\Aon\Z/i)
+
+  MAX_RETRY_COUNT = (ENV["LIBGSS_MAX_RETRY_COUNT"] || 10).to_i
+
+  class << self
+
+    def with_retry(name)
+      retry_count = 0
+      begin
+        return yield
+      rescue OpenSSL::SSL::SSLError => e
+        $stderr.puts("retrying #{name} [#{e.class.name}] #{e.message}")
+        sleep(0.2)
+        retry_count += 1
+        retry if retry_count <= MAX_RETRY_COUNT
+        raise e
+      end
+    end
+
+  end
 end
