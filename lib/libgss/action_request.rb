@@ -52,7 +52,9 @@ module Libgss
 
     # アクション群を実行するために実際にHTTPリクエストを送信します。
     def send_request(&callback)
-      res = @httpclient.post(action_url, {"inputs" => @actions.map(&:to_hash)}.to_json, req_headers)
+      res = Libgss.with_retry("action_request") do
+        @httpclient.post(action_url, {"inputs" => @actions.map(&:to_hash)}.to_json, req_headers)
+      end
       case res.code.to_i
       when 200..299 then # OK
       else
