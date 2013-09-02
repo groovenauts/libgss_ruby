@@ -5,6 +5,8 @@ require 'oauth'
 
 require 'digest/hmac'
 
+require 'uri'
+
 module Libgss
   class HttpClientWithSignatureKey
 
@@ -40,6 +42,57 @@ module Libgss
       headers["oauth_signature"] = signature_class.sign(req_hash, options)
 
       res = @impl.post(uri, body, headers.update(original_headers))
+    end
+
+    def get(uri, query={}, original_headers = {}, &block)
+      headers = {
+        "oauth_consumer_key" => network.consumer_key || "",
+        "oauth_token"        => network.auth_token,
+      }
+      oauth_params = {
+        "oauth_signature_method" => "HMAC-SHA1"
+      }.update(headers)
+
+      encoded_query = ''
+      query.each do |key, val|
+        key = key.to_s
+        if val.is_a?(::Array)
+          k = CGI.escape("#{key}[]")
+          val.each do |v|
+            encoded_query << "&#{k}=#{URI.escape(v.to_s)}"
+          end
+        elsif val.is_a?(::Hash)
+          val.each do |k, v|
+            k = URI.escape("#{key}[#{k}]")
+            encoded_query << "&#{k}=#{URI.escape(v.to_s)}"
+          end
+        else
+          encoded_query << "&#{URI.escape(key)}=#{URI.escape(val.to_s)}"
+        end
+      end
+      if uri =~ /\?/
+        uri += encoded_query
+      else
+        uri += encoded_query.gsub(/^&/, '?')
+      end
+      req_hash = {
+        "method" => "POST",
+        "uri"    => uri,
+        "parameters" => oauth_params
+      }
+      puts(req_hash.inspect)
+
+      options = {
+        :consumer_secret => network.consumer_secret,
+        :token_secret    => network.signature_key
+      }
+
+      signature_class = Libgss.use_oauth_gem ? ::OAuth::Signature : Signature
+      $stdout.puts("signature_class: #{signature_class.name}") if ENV["VERBOSE"]
+
+      headers["oauth_signature"] = signature_class.sign(req_hash, options)
+
+      res = @impl.get(uri, nil, headers.update(original_headers))
     end
 
     class Signature
