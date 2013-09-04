@@ -80,7 +80,6 @@ module Libgss
         "uri"    => uri,
         "parameters" => oauth_params
       }
-      puts(req_hash.inspect)
 
       options = {
         :consumer_secret => network.consumer_secret,

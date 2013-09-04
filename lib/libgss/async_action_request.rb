@@ -31,7 +31,7 @@ module Libgss
       @outputs
     end
 
-    def delayed_response()
+    def async_status()
       raise Error, "failed to get response. please exec send_request before call." unless @ids
 
       res = @httpclient.get(action_url, {input_ids: @ids.join(',')}, req_headers)
