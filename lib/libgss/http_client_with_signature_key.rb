@@ -7,6 +7,9 @@ require 'digest/hmac'
 
 require 'uri'
 
+require 'securerandom'
+
+
 module Libgss
   class HttpClientWithSignatureKey
 
@@ -19,6 +22,8 @@ module Libgss
       headers = {
         "oauth_consumer_key" => network.consumer_key || "",
         "oauth_token"        => network.auth_token,
+        "oauth_nonce"        => oauth_nonce,
+        "oauth_timestamp"    => oauth_timestamp,
       }
       oauth_params = {
         "body" => body,
@@ -48,6 +53,8 @@ module Libgss
       headers = {
         "oauth_consumer_key" => network.consumer_key || "",
         "oauth_token"        => network.auth_token,
+        "oauth_nonce"        => oauth_nonce,
+        "oauth_timestamp"    => oauth_timestamp,
       }
       oauth_params = {
         "oauth_signature_method" => "HMAC-SHA1"
@@ -92,6 +99,14 @@ module Libgss
       headers["oauth_signature"] = signature_class.sign(req_hash, options)
 
       res = @impl.get(uri, nil, headers.update(original_headers))
+    end
+
+    def oauth_nonce
+      SecureRandom.uuid.to_s
+    end
+
+    def oauth_timestamp
+      Time.now.utc.to_i
     end
 
     class Signature
