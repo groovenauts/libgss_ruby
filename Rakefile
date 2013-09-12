@@ -32,7 +32,7 @@ task :test do
     raise "#{sample_dir} is empty. You have to do `git submodule update --init` before `rake test`"
   end
 
-  fileutils.chdir(sample_dir){ system!("rake test:servers:start") }
+  fileutils.chdir(sample_dir){ system!("export FONTANA_APP_MODE=test && bundle exec rake vendor:fontana:prepare test:servers:start") }
   begin
     fileutils.chdir(__dir__) do
       Rake::Task["spec"].execute

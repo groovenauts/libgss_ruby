@@ -1,17 +1,23 @@
 PATH
   remote: .
   specs:
-    libgss (0.5.0)
+    libgss (0.6.1)
       httpclient
       json
       oauth
+      tengine_support
 
 GEM
   remote: https://rubygems.org/
   specs:
+    activesupport (3.2.14)
+      i18n (~> 0.6, >= 0.6.4)
+      multi_json (~> 1.0)
     diff-lcs (1.2.3)
     httpclient (2.3.4.1)
+    i18n (0.6.5)
     json (1.8.0)
+    multi_json (1.7.9)
     oauth (0.4.7)
     rake (10.0.4)
     rspec (2.13.0)
@@ -22,6 +28,8 @@ GEM
     rspec-expectations (2.13.0)
       diff-lcs (>= 1.1.3, < 2.0)
     rspec-mocks (2.13.1)
+    tengine_support (1.2.2)
+      activesupport (>= 3.0.0, < 4.0.0)
 
 PLATFORMS
   ruby
