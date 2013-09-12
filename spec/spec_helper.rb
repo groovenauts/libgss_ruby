@@ -16,7 +16,8 @@ def new_network(url = "http://localhost:4000", player_id = "1000001")
     device_type_cd: 1,
     client_version: "2013073101",
     consumer_secret: config["consumer_secret"],
-    player_id: player_id
+    player_id: player_id,
+    # ssl_disabled: true,
   }
   Libgss::Network.new(url, opts)
 end
