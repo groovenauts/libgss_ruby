@@ -173,6 +173,17 @@ module Libgss
       result
     end
 
+    # device_idを設定します
+    #
+    # @param [String] device_id デバイスID
+    # @param [Hash] options オプション
+    # @option options [Integer] :device_type デバイス種別
+    def set_device_id(device_id, options = {device_type: 1})
+      if player_info[:device_id] = device_id
+        player_info.update(options)
+      end
+    end
+
     def uuid_gen
       @uuid_gen ||= UUID.new
     end
