@@ -143,7 +143,9 @@ module Libgss
           @request["method"],
           normalized_uri,
           normalized_parameters]
-        base.map { |v| escape(v) }.join("&")
+        r = base.map { |v| escape(v) }.join("&")
+        $stdout.puts("signature_base_string: #{r.inspect}") if ENV["VERBOSE"]
+        r
       end
 
       def normalized_uri
