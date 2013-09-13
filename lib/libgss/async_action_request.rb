@@ -10,6 +10,14 @@ module Libgss
 
     attr_reader :ids
     attr_accessor :action_id
+    attr_accessor :result_url
+
+
+    # コンストラクタ
+    def initialize(httpclient, action_url, result_url, req_headers)
+      super(httpclient, action_url, req_headers)
+      @result_url = result_url
+    end
 
     # アクション群を実行するために実際にHTTPリクエストを送信します。
     def send_request(&callback)
@@ -34,7 +42,7 @@ module Libgss
     def async_status()
       raise Error, "failed to get response. please exec send_request before call." unless @ids
 
-      res = @httpclient.get(action_url, {input_ids: @ids.join(',')}, req_headers)
+      res = @httpclient.get(result_url, {input_ids: @ids.join(',')}, req_headers)
       case res.code.to_i
       when 200..299 then # OK
       else

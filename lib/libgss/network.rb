@@ -118,7 +118,7 @@ module Libgss
     end
 
     def new_async_action_request
-      AsyncActionRequest.new(httpclient_for_action, aync_action_url, req_headers)
+      AsyncActionRequest.new(httpclient_for_action, async_action_url, async_result_url, req_headers)
     end
 
     def new_public_asset_request(asset_path)
@@ -183,8 +183,12 @@ module Libgss
       @action_url ||= base_url + "/api/#{API_VERSION}/actions.json?auth_token=#{auth_token}"
     end
 
-    def aync_action_url
+    def async_action_url
       @async_action_url ||= base_url + "/api/#{API_VERSION}/async_actions.json?auth_token=#{auth_token}"
+    end
+
+    def async_result_url
+      @async_result_url ||= base_url + "/api/#{API_VERSION}/async_results.json?auth_token=#{auth_token}"
     end
 
     def public_asset_url(asset_path)
