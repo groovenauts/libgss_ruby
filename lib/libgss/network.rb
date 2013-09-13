@@ -158,12 +158,14 @@ module Libgss
           self.platform = name
         end
       end
+      self
     end
 
     # device_idを生成します
     #
     # @param [Hash] options オプション
     # @option options [Integer] :device_type デバイス種別
+    # @return [String] 生成したUUIDの文字列
     def generate_device_id(options = {device_type: 1})
       result = uuid_gen.generate
       player_info.update(options)
