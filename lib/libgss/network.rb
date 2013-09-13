@@ -27,6 +27,7 @@ module Libgss
     attr_accessor :api_version
     attr_accessor :platform
     attr_accessor :player_id
+    attr_accessor :player_info
     attr_accessor :public_asset_url_prefix
     attr_accessor :public_asset_url_suffix
 
@@ -64,6 +65,7 @@ module Libgss
       @ssl_base_url = @base_url if @ssl_disabled
       @platform  = options[:platform] || "fontana"
       @player_id = options[:player_id]
+      @player_info = options[:player_info] || {}
 
       @consumer_secret = options[:consumer_secret] || ENV["CONSUMER_SECRET"]
       @ignore_signature_key = !!options[:ignore_signature_key]
@@ -88,7 +90,7 @@ module Libgss
     # @iotion extra [Integer] :device_id デバイス識別子
     # @return [Boolean] ログインに成功した場合はtrue、失敗した場合はfalse
     def login(extra = {})
-      attrs = { "player[id]" => player_id }
+      attrs = @player_info.merge({ "player[id]" => player_id })
       extra.each{|k, v| attrs[ "player[#{k}]" ] = v }
       res = Libgss.with_retry("login") do
         @httpclient.post(login_url, attrs, req_headers)
