@@ -6,6 +6,8 @@ require 'json'
 require 'uri'
 require 'tengine/support/yaml_with_erb'
 
+require 'uuid'
+
 module Libgss
 
   class Network
