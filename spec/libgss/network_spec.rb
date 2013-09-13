@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Libgss::Network do
 
   let(:network) do
-    # Libgss::Network.new("http://localhost:3000")
+    # Libgss::Network.new("http://localhost:4000")
     new_network
   end
 
@@ -19,6 +19,19 @@ describe Libgss::Network do
         network.signature_key.should_not == nil
         res.should == true
       end
+    end
+  end
+
+  describe "#initialize" do
+    context "with_trail_slash" do
+      let(:target){ new_network("http://localhost:4000/") }
+      it{ target.base_url.should == network.base_url }
+      it{ target.ssl_base_url.should == network.ssl_base_url }
+    end
+    context "hostname only" do
+      let(:target){ new_network("localhost") }
+      it{ target.base_url.should == "http://localhost:80" }
+      it{ target.ssl_base_url.should == "https://localhost:443" }
     end
   end
 

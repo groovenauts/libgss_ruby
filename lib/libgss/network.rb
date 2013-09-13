@@ -53,7 +53,7 @@ module Libgss
     def initialize(base_url_or_host, options = {})
       @ssl_disabled = options.delete(:ssl_disabled)
       if base_url_or_host =~ URI.regexp
-        @base_url = base_url_or_host
+        @base_url = base_url_or_host.sub(/\/\Z/, '')
         uri = URI.parse(@base_url)
         @ssl_base_url = build_https_url(uri)
       else
