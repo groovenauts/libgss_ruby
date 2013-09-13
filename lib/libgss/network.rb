@@ -4,10 +4,16 @@ require 'libgss'
 require 'httpclient'
 require 'json'
 require 'uri'
+require 'tengine/support/yaml_with_erb'
+
+require 'uuid'
 
 module Libgss
 
   class Network
+
+    class Error < StandardError
+    end
 
     API_VERSION = "1.0.0".freeze
 
@@ -23,6 +29,7 @@ module Libgss
     attr_accessor :api_version
     attr_accessor :platform
     attr_accessor :player_id
+    attr_accessor :player_info
     attr_accessor :public_asset_url_prefix
     attr_accessor :public_asset_url_suffix
 
@@ -49,7 +56,7 @@ module Libgss
     def initialize(base_url_or_host, options = {})
       @ssl_disabled = options.delete(:ssl_disabled)
       if base_url_or_host =~ URI.regexp
-        @base_url = base_url_or_host
+        @base_url = base_url_or_host.sub(/\/\Z/, '')
         uri = URI.parse(@base_url)
         @ssl_base_url = build_https_url(uri)
       else
@@ -60,6 +67,7 @@ module Libgss
       @ssl_base_url = @base_url if @ssl_disabled
       @platform  = options[:platform] || "fontana"
       @player_id = options[:player_id]
+      @player_info = options[:player_info] || {}
 
       @consumer_secret = options[:consumer_secret] || ENV["CONSUMER_SECRET"]
       @ignore_signature_key = !!options[:ignore_signature_key]
@@ -77,21 +85,14 @@ module Libgss
       r << fields.join(", ") << ">"
     end
 
-    def req_headers
-      {
-        "X-Device-Type" => device_type_cd,
-        "X-Client-Version" => client_version,
-      }
-    end
-
     # GSSサーバに接続してログインの検証と処理を行います。
     #
-    # @param [String] base_url_or_host 接続先の基準となるURLあるいはホスト名
-    # @param [Hash] options オプション
-    # @option options [String]  :platform 接続先のGSSサーバの認証のプラットフォーム。デフォルトは"fontana"。
+    # @param [Hash] extra オプション
+    # @option extra [Integer] :device_type デバイス種別
+    # @option extra [Integer] :device_id デバイス識別子
     # @return [Boolean] ログインに成功した場合はtrue、失敗した場合はfalse
     def login(extra = {})
-      attrs = { "player[id]" => player_id }
+      attrs = @player_info.merge({ "player[id]" => player_id })
       extra.each{|k, v| attrs[ "player[#{k}]" ] = v }
       res = Libgss.with_retry("login") do
         @httpclient.post(login_url, attrs, req_headers)
@@ -104,29 +105,96 @@ module Libgss
       end
     end
 
+    # GSSサーバに接続してログインの検証と処理を行います。
+    #
+    # @param [Hash] extra オプション
+    # @see #login
+    # @return ログインに成功した場合は自身のオブジェクト返します。失敗した場合はLibgss::Network::Errorがraiseされます。
+    def login!(extra = {})
+      raise Error, "Login Failure" unless login(extra)
+      self
+    end
+
+    # @return [Boolean] コンストラクタに指定されたignore_signature_keyを返します
     def ignore_signature_key?
       @ignore_signature_key
     end
 
+    # load_player_id メソッドをオーバーライドした場合に使用することを想定しています。
+    # それ以外の場合は使用しないでください。
     def setup
       load_player_id
       login
     end
 
+    # @return [Libgss::ActionRequest] アクション用リクエストを生成して返します
     def new_action_request
       ActionRequest.new(httpclient_for_action, action_url, req_headers)
     end
 
+    # @return [Libgss::AsyncActionRequest] 非同期アクション用リクエストを生成して返します
     def new_async_action_request
       AsyncActionRequest.new(httpclient_for_action, async_action_url, async_result_url, req_headers)
     end
 
+    # @return [Libgss::AssetRequest] 公開アセットを取得するリクエストを生成して返します
     def new_public_asset_request(asset_path)
       AssetRequest.new(@httpclient, public_asset_url(asset_path), req_headers)
     end
 
+    # @return [Libgss::AssetRequest] 保護付きアセットを取得するリクエストを生成して返します
     def new_protected_asset_request(asset_path)
       AssetRequest.new(@httpclient, protected_asset_url(asset_path), req_headers)
+    end
+
+    # @param [String] path 対象となるapp_garden.ymlへのパス。デフォルトは "config/app_garden.yml"
+    # @return 成功した場合自身のオブジェクトを返します。
+    def load_app_garden(path = "config/app_garden.yml")
+      hash = YAML.load_file_with_erb(path)
+      self.consumer_secret = hash["consumer_secret"]
+      if platform = hash["platform"]
+        name = (platform["name"] || "").strip
+        unless name.empty?
+          self.platform = name
+        end
+      end
+      self
+    end
+
+    # device_idを生成します
+    #
+    # @param [Hash] options オプション
+    # @option options [Integer] :device_type デバイス種別
+    # @return [String] 生成したUUIDの文字列
+    def generate_device_id(options = {device_type: 1})
+      result = uuid_gen.generate
+      player_info.update(options)
+      player_info[:device_id] = result
+      result
+    end
+
+    # device_idを設定します
+    #
+    # @param [String] device_id デバイスID
+    # @param [Hash] options オプション
+    # @option options [Integer] :device_type デバイス種別
+    def set_device_id(device_id, options = {device_type: 1})
+      if player_info[:device_id] = device_id
+        player_info.update(options)
+      end
+    end
+
+    def uuid_gen
+      @uuid_gen ||= UUID.new
+    end
+
+    private
+
+    def req_headers
+      {
+        "X-Device-Type" => device_type_cd,
+        "X-Client-Version" => client_version,
+      }
     end
 
     def httpclient_for_action
@@ -134,8 +202,6 @@ module Libgss
         @ignore_signature_key ? @httpclient :
         HttpClientWithSignatureKey.new(@httpclient, self)
     end
-
-    private
 
     # ストレージからplayer_idをロードします
     # 保存されていたらtrueを、保存されていなかったらfalseを返します。

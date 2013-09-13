@@ -25,6 +25,7 @@ describe Libgss::ActionRequest do
       "items"=>{"20001"=>3, "20005"=>1},
       "equipments"=>{"head"=>10018, "body"=>10012, "right_hand"=>10001, "left_hand"=>nil}
     },
+    "gender" => 0,
     "greeting_points"=>0,
     "login_bonus"=>[[10001, 1]],
     "invitation_code"=>nil,
