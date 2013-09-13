@@ -86,8 +86,8 @@ module Libgss
     # GSSサーバに接続してログインの検証と処理を行います。
     #
     # @param [Hash] extra オプション
-    # @iotion extra [Integer] :device_type デバイス種別
-    # @iotion extra [Integer] :device_id デバイス識別子
+    # @option extra [Integer] :device_type デバイス種別
+    # @option extra [Integer] :device_id デバイス識別子
     # @return [Boolean] ログインに成功した場合はtrue、失敗した場合はfalse
     def login(extra = {})
       attrs = @player_info.merge({ "player[id]" => player_id })
@@ -156,6 +156,21 @@ module Libgss
           self.platform = name
         end
       end
+    end
+
+    # device_idを生成します
+    #
+    # @param [Hash] options オプション
+    # @option options [Integer] :device_type デバイス種別
+    def generate_device_id(options = {device_type: 1})
+      result = uuid_gen.generate
+      player_info.update(options)
+      player_info[:device_id] = result
+      result
+    end
+
+    def uuid_gen
+      @uuid_gen ||= UUID.new
     end
 
     private

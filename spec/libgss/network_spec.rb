@@ -1,5 +1,7 @@
 require 'spec_helper'
 
+require 'uuid'
+
 describe Libgss::Network do
 
   let(:network) do
@@ -160,6 +162,25 @@ describe Libgss::Network do
       network.load_app_garden(File.expand_path("../../../fontana_sample/config/app_garden.yml", __FILE__))
       network.consumer_secret.should_not be_nil
       network.platform.should == "fontana"
+    end
+  end
+
+  describe "generate_device_id" do
+    let(:generated){ UUID.new.generate }
+
+    before do
+      network.uuid_gen.should_receive(:generate).and_return(generated)
+      network.player_info.should == {}
+    end
+
+    it "without options" do
+      network.generate_device_id
+      network.player_info.should == {device_type: 1, device_id: generated}
+    end
+
+    it "with device_type" do
+      network.generate_device_id(device_type: 2)
+      network.player_info.should == {device_type: 2, device_id: generated}
     end
   end
 
