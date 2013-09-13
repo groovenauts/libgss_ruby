@@ -5,6 +5,7 @@ PATH
       httpclient
       json
       oauth
+      tengine_support
 
 GEM
   remote: https://rubygems.org/
@@ -38,4 +39,3 @@ DEPENDENCIES
   libgss!
   rake
   rspec
-  tengine_support
