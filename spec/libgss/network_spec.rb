@@ -30,8 +30,8 @@ describe Libgss::Network do
     end
     context "hostname only" do
       let(:target){ new_network("localhost") }
-      it{ target.base_url.should == "http://localhost:80" }
-      it{ target.ssl_base_url.should == "https://localhost:443" }
+      it{ target.base_url.should == "http://localhost:#{ENV['DEFAULT_HTTP_PORT' ] ||  80}" }
+      it{ target.ssl_base_url.should == "https://localhost:#{ENV['DEFAULT_HTTPS_PORT' ] || 443}" }
     end
   end
 
