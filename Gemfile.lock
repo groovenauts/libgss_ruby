@@ -1,11 +1,10 @@
 PATH
   remote: .
   specs:
-    libgss (0.6.1)
+    libgss (0.7.0)
       httpclient
       json
       oauth
-      tengine_support
 
 GEM
   remote: https://rubygems.org/
@@ -39,3 +38,4 @@ DEPENDENCIES
   libgss!
   rake
   rspec
+  tengine_support
