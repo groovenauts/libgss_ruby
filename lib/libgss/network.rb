@@ -4,6 +4,7 @@ require 'libgss'
 require 'httpclient'
 require 'json'
 require 'uri'
+require 'tengine/support/yaml_with_erb'
 
 module Libgss
 
@@ -104,7 +105,7 @@ module Libgss
     #
     # @param [Hash] extra オプション
     # @see #login
-    # @return [Boolean] ログインに成功した場合は自身のオブジェクト返します。失敗した場合はLibgss::Network::Errorがraiseされます。
+    # @return ログインに成功した場合は自身のオブジェクト返します。失敗した場合はLibgss::Network::Errorがraiseされます。
     def login!(extra = {})
       raise Error, "Login Failure" unless login(extra)
       self
@@ -140,6 +141,19 @@ module Libgss
     # @return [Libgss::AssetRequest] 保護付きアセットを取得するリクエストを生成して返します
     def new_protected_asset_request(asset_path)
       AssetRequest.new(@httpclient, protected_asset_url(asset_path), req_headers)
+    end
+
+    # @param [String] path 対象となるapp_garden.ymlへのパス。デフォルトは "config/app_garden.yml"
+    # @return 成功した場合自身のオブジェクトを返します。
+    def load_app_garden(path = "config/app_garden.yml")
+      hash = YAML.load_file_with_erb(path)
+      self.consumer_secret = hash["consumer_secret"]
+      if platform = hash["platform"]
+        name = (platform["name"] || "").strip
+        unless name.empty?
+          self.platform = name
+        end
+      end
     end
 
     private

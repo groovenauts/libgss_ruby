@@ -129,4 +129,25 @@ describe Libgss::Network do
     # end
   end
 
+
+  describe "load_app_garden" do
+    it "without filepath" do
+      network.consumer_secret = nil
+      network.platform = nil
+      Dir.chdir(File.expand_path("../../../fontana_sample", __FILE__)) do
+        network.load_app_garden
+      end
+      network.consumer_secret.should_not be_nil
+      network.platform.should be_nil
+    end
+
+    it "with filepath" do
+      network.consumer_secret = nil
+      network.platform = "fontana"
+      network.load_app_garden(File.expand_path("../../../fontana_sample/config/app_garden.yml", __FILE__))
+      network.consumer_secret.should_not be_nil
+      network.platform.should == "fontana"
+    end
+  end
+
 end
