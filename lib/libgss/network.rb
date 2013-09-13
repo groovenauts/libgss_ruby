@@ -80,18 +80,11 @@ module Libgss
       r << fields.join(", ") << ">"
     end
 
-    def req_headers
-      {
-        "X-Device-Type" => device_type_cd,
-        "X-Client-Version" => client_version,
-      }
-    end
-
     # GSSサーバに接続してログインの検証と処理を行います。
     #
-    # @param [String] base_url_or_host 接続先の基準となるURLあるいはホスト名
-    # @param [Hash] options オプション
-    # @option options [String]  :platform 接続先のGSSサーバの認証のプラットフォーム。デフォルトは"fontana"。
+    # @param [Hash] extra オプション
+    # @iotion extra [Integer] :device_type デバイス種別
+    # @iotion extra [Integer] :device_id デバイス識別子
     # @return [Boolean] ログインに成功した場合はtrue、失敗した場合はfalse
     def login(extra = {})
       attrs = { "player[id]" => player_id }
@@ -107,33 +100,55 @@ module Libgss
       end
     end
 
+    # GSSサーバに接続してログインの検証と処理を行います。
+    #
+    # @param [Hash] extra オプション
+    # @see #login
+    # @return [Boolean] ログインに成功した場合は自身のオブジェクト返します。失敗した場合はLibgss::Network::Errorがraiseされます。
     def login!(extra = {})
       raise Error, "Login Failure" unless login(extra)
+      self
     end
 
+    # @return [Boolean] コンストラクタに指定されたignore_signature_keyを返します
     def ignore_signature_key?
       @ignore_signature_key
     end
 
+    # load_player_id メソッドをオーバーライドした場合に使用することを想定しています。
+    # それ以外の場合は使用しないでください。
     def setup
       load_player_id
       login
     end
 
+    # @return [Libgss::ActionRequest] アクション用リクエストを生成して返します
     def new_action_request
       ActionRequest.new(httpclient_for_action, action_url, req_headers)
     end
 
+    # @return [Libgss::AsyncActionRequest] 非同期アクション用リクエストを生成して返します
     def new_async_action_request
       AsyncActionRequest.new(httpclient_for_action, async_action_url, async_result_url, req_headers)
     end
 
+    # @return [Libgss::AssetRequest] 公開アセットを取得するリクエストを生成して返します
     def new_public_asset_request(asset_path)
       AssetRequest.new(@httpclient, public_asset_url(asset_path), req_headers)
     end
 
+    # @return [Libgss::AssetRequest] 保護付きアセットを取得するリクエストを生成して返します
     def new_protected_asset_request(asset_path)
       AssetRequest.new(@httpclient, protected_asset_url(asset_path), req_headers)
+    end
+
+    private
+
+    def req_headers
+      {
+        "X-Device-Type" => device_type_cd,
+        "X-Client-Version" => client_version,
+      }
     end
 
     def httpclient_for_action
@@ -141,8 +156,6 @@ module Libgss
         @ignore_signature_key ? @httpclient :
         HttpClientWithSignatureKey.new(@httpclient, self)
     end
-
-    private
 
     # ストレージからplayer_idをロードします
     # 保存されていたらtrueを、保存されていなかったらfalseを返します。
