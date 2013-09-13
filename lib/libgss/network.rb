@@ -9,6 +9,9 @@ module Libgss
 
   class Network
 
+    class Error < StandardError
+    end
+
     API_VERSION = "1.0.0".freeze
 
     attr_reader :base_url
@@ -102,6 +105,10 @@ module Libgss
         @signature_key = obj["signature_key"]
         !!@auth_token && !!@signature_key
       end
+    end
+
+    def login!(extra = {})
+      raise Error, "Login Failure" unless login(extra)
     end
 
     def ignore_signature_key?

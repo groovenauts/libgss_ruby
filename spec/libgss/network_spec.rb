@@ -51,21 +51,27 @@ describe Libgss::Network do
 
     end
 
-    context "failure" do
-      it "unregistered (maybe invalid) player_id" do
+    context "failure with unregistered (maybe invalid) player_id" do
+      before do
         network.player_id = "unregistered"
         network.auth_token.should == nil
         network.signature_key.should == nil
+      end
+
+      it "by using login" do
         res = network.login
         network.auth_token.should == nil
         network.signature_key.should == nil
         res.should == false
       end
+      it "by using login!" do
+        expect{ network.login! }.to raise_error(Libgss::Network::Error)
+      end
     end
 
     context "error" do
       shared_examples_for "Libgss::Network#login failure" do
-        it do
+        it "by using login"do
           network.auth_token.should == nil
           network.signature_key.should == nil
           res = network.login
@@ -73,12 +79,17 @@ describe Libgss::Network do
           network.signature_key.should == nil
           res.should == false
         end
+        it "by using login"do
+          network.auth_token.should == nil
+          network.signature_key.should == nil
+          expect{ network.login! }.to raise_error(Libgss::Network::Error)
+        end
       end
 
       [300, 400, 500].map{|n| (1..10).map{|i| n + i} }.flatten.each do |status_code|
         context "status_code is #{status_code}" do
           before do
-            res = mock(:reponse)
+            res = double(:reponse)
             res.should_receive(:status).and_return(status_code)
             HTTPClient.any_instance.should_receive(:post).and_return(res)
           end
@@ -88,7 +99,7 @@ describe Libgss::Network do
 
       context "JSON parse Error" do
         before do
-          res = mock(:reponse)
+          res = double(:reponse)
           res.stub(:status).and_return(200)
           res.should_receive(:content).and_return("invalid JSON format string")
           HTTPClient.any_instance.should_receive(:post).and_return(res)
