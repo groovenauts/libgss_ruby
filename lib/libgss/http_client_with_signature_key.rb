@@ -42,7 +42,10 @@ module Libgss
       }
 
       signature_class = Libgss.use_oauth_gem ? ::OAuth::Signature : Signature
-      $stdout.puts("signature_class: #{signature_class.name}") if ENV["VERBOSE"]
+      if ENV["VERBOSE"]
+        $stdout.puts("signature_class: #{signature_class.name}")
+        $stdout.puts("       req_hash: #{req_hash.inspect}")
+      end
 
       headers["oauth_signature"] = signature_class.sign(req_hash, options)
 
@@ -57,6 +60,7 @@ module Libgss
         "oauth_timestamp"    => oauth_timestamp,
       }
       oauth_params = {
+        "body" => '',
         "oauth_signature_method" => "HMAC-SHA1"
       }.update(headers)
 
@@ -83,7 +87,7 @@ module Libgss
         uri += encoded_query.gsub(/^&/, '?')
       end
       req_hash = {
-        "method" => "POST",
+        "method" => "GET",
         "uri"    => uri,
         "parameters" => oauth_params
       }
@@ -94,7 +98,10 @@ module Libgss
       }
 
       signature_class = Libgss.use_oauth_gem ? ::OAuth::Signature : Signature
-      $stdout.puts("signature_class: #{signature_class.name}") if ENV["VERBOSE"]
+      if ENV["VERBOSE"]
+        $stdout.puts("signature_class: #{signature_class.name}")
+        $stdout.puts("       req_hash: #{req_hash.inspect}")
+      end
 
       headers["oauth_signature"] = signature_class.sign(req_hash, options)
 
