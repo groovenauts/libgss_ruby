@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require 'spec_helper'
 
 require 'uuid'
@@ -116,9 +117,10 @@ describe Libgss::Network do
 
       context "JSON parse Error" do
         before do
+          $stderr.stub(:puts).with(an_instance_of(String)) # $stderrにメッセージが出力されます
           res = double(:reponse)
           res.stub(:status).and_return(200)
-          res.should_receive(:content).and_return("invalid JSON format string")
+          res.should_receive(:content).twice.and_return("invalid JSON format string")
           HTTPClient.any_instance.should_receive(:post).and_return(res)
         end
 

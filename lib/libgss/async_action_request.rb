@@ -22,13 +22,7 @@ module Libgss
     # アクション群を実行するために実際にHTTPリクエストを送信します。
     def send_request(&callback)
       res = @httpclient.post(action_url, {"inputs" => @actions.map(&:to_hash)}.to_json, req_headers)
-      case res.code.to_i
-      when 200..299 then # OK
-      else
-        raise Error, "failed to send action request: [#{res.code}] #{res.body}"
-      end
-      r = JSON.parse(res.body)
-      # puts res.body
+      r = process_response(res, :async_request)
       @outputs = Outputs.new(r["outputs"])
       callback.call(@outputs) if callback
 
@@ -43,12 +37,7 @@ module Libgss
       raise Error, "failed to get response. please exec send_request before call." unless @ids
 
       res = @httpclient.get(result_url, {input_ids: @ids.join(',')}, req_headers)
-      case res.code.to_i
-      when 200..299 then # OK
-      else
-        raise Error, "failed to send action request: [#{res.code}] #{res.body}"
-      end
-      r = JSON.parse(res.body)
+      r = process_response(res, :aync_status)
     end
   end
 end
