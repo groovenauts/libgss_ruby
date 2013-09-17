@@ -22,9 +22,13 @@ module Libgss
       headers = {
         "oauth_consumer_key" => network.consumer_key || "",
         "oauth_token"        => network.auth_token,
-        "oauth_nonce"        => oauth_nonce,
-        "oauth_timestamp"    => oauth_timestamp,
       }
+      unless @network.ignore_oauth_nonce
+        headers.update({
+            "oauth_nonce"     => oauth_nonce,
+            "oauth_timestamp" => oauth_timestamp,
+          })
+      end
       oauth_params = {
         "body" => body,
         "oauth_signature_method" => "HMAC-SHA1"
@@ -56,9 +60,13 @@ module Libgss
       headers = {
         "oauth_consumer_key" => network.consumer_key || "",
         "oauth_token"        => network.auth_token,
-        "oauth_nonce"        => oauth_nonce,
-        "oauth_timestamp"    => oauth_timestamp,
       }
+      unless @network.ignore_oauth_nonce
+        headers.update({
+            "oauth_nonce"     => oauth_nonce,
+            "oauth_timestamp" => oauth_timestamp,
+          })
+      end
       oauth_params = {
         "body" => '',
         "oauth_signature_method" => "HMAC-SHA1"
@@ -109,11 +117,11 @@ module Libgss
     end
 
     def oauth_nonce
-      SecureRandom.uuid.to_s
+      @network.oauth_nonce || SecureRandom.uuid.to_s
     end
 
     def oauth_timestamp
-      Time.now.utc.to_i
+      @network.oauth_timestamp || Time.now.utc.to_i
     end
 
     class Signature

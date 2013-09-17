@@ -25,6 +25,9 @@ module Libgss
 
     attr_accessor :consumer_secret
     attr_accessor :consumer_key
+    attr_accessor :ignore_oauth_nonce
+    attr_accessor :oauth_nonce
+    attr_accessor :oauth_timestamp
 
     attr_accessor :api_version
     attr_accessor :platform
@@ -49,6 +52,9 @@ module Libgss
     # @option options [String]  :platform 接続先のGSSサーバの認証のプラットフォーム。デフォルトは"fontana"。
     # @option options [String]  :player_id 接続に使用するプレイヤのID
     # @option options [String]  :consumer_secret GSSサーバとクライアントの間で行う署名の検証に使用される文字列。
+    # @option options [Boolean] :ignore_oauth_nonce OAuth認証時にoauth_nonceとoauth_timestampを使用しないかどうか。
+    # @option options [String]  :oauth_nonce OAuth認証のoauth_nonceパラメータ
+    # @option options [Integer] :oauth_timestamp OAuth認証のoauth_timestampパラメータ
     # @option options [Boolean] :ssl_disabled SSLを無効にするかどうか。
     # @option options [Boolean] :ignore_signature_key シグネチャキーによる署名を行うかどうか
     # @option options [Integer] :device_type_cd GSS/fontanaに登録されたデバイス種別
@@ -71,6 +77,9 @@ module Libgss
 
       @consumer_secret = options[:consumer_secret] || ENV["CONSUMER_SECRET"]
       @ignore_signature_key = !!options[:ignore_signature_key]
+      @ignore_oauth_nonce = !!options[:ignore_oauth_nonce]
+      @oauth_nonce = options[:oauth_nonce] || nil
+      @oauth_timestamp = options[:oauth_timestamp] || nil
 
       @device_type_cd = options[:device_type_cd]
       @client_version = options[:client_version]

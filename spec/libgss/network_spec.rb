@@ -19,6 +19,9 @@ describe Libgss::Network do
         network.player_id.should_not == nil
         network.auth_token.should_not == nil
         network.signature_key.should_not == nil
+        network.ignore_oauth_nonce.should == false
+        network.oauth_nonce.should == nil
+        network.oauth_timestamp.should == nil
         res.should == true
       end
     end
@@ -63,7 +66,6 @@ describe Libgss::Network do
       it_should_behave_like "Libgss::Network#login success",
         Proc.new{ network.player_id = nil },
         Proc.new{ network.player_id.should_not == nil }
-
     end
 
     context "failure with unregistered (maybe invalid) player_id" do
@@ -184,4 +186,42 @@ describe Libgss::Network do
     end
   end
 
+  describe "with oauth options" do
+
+    def spec_with_network_options(opts={}, &block)
+      r = new_network_with_options(opts).tap(&:login).new_action_request
+      r.server_time
+      r.send_request do |outputs|
+        outputs.length.should == 1
+        result = outputs.first['result']
+        yield(result) if block_given?
+      end
+    end
+
+    context "success" do
+      it "with ignore_oauth_nonce" do
+        spec_with_network_options({ignore_oauth_nonce: true})
+      end
+      it "with oauth_nonce" do
+        spec_with_network_options({oauth_nonce: UUID.new.generate})
+      end
+      it "with oauth_timestamp" do
+        time = Time.now
+        spec_with_network_options({oauth_timestamp: time.to_i})
+      end
+    end
+    context "401 error" do
+      it "with empty oauth_nonce" do
+        proc{
+          spec_with_network_options({oauth_nonce: ''})
+        }.should raise_error(::Libgss::ActionRequest::Error)
+      end
+      it "with old oauth_timestamp" do
+        time = Time.local(2013,7,1,12,0,0)
+        proc{
+          spec_with_network_options({oauth_timestamp: time.to_i})
+        }.should raise_error(::Libgss::ActionRequest::Error)
+      end
+    end
+  end
 end
