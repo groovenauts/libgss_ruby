@@ -236,6 +236,7 @@ module Libgss
         obj = JSON.parse(res.content)
         return yield(obj)
       rescue JSON::ParserError => e
+        $stderr.puts("\e[31m[#{e.class}] #{e.message}\n#{res.content}")
         return false
       end
     end
