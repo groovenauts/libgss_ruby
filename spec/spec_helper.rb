@@ -21,3 +21,15 @@ def new_network(url = "http://localhost:4000", player_id = "1000001")
   }
   Libgss::Network.new(url, opts)
 end
+
+def new_network_with_options(opts={}, url = "http://localhost:4000", player_id = "1000001")
+  config = YAML.load_file(File.expand_path("../../fontana_sample/config/app_garden.yml", __FILE__))
+  opts = {
+    device_type_cd: 1,
+    client_version: "2013073101",
+    consumer_secret: config["consumer_secret"],
+    player_id: player_id,
+    # ssl_disabled: true,
+  }.update(opts)
+  Libgss::Network.new(url, opts)
+end
