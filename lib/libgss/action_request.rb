@@ -55,17 +55,26 @@ module Libgss
       res = Libgss.with_retry("action_request") do
         @httpclient.post(action_url, {"inputs" => @actions.map(&:to_hash)}.to_json, req_headers)
       end
-      case res.code.to_i
-      when 200..299 then # OK
-      else
-        raise Error, "failed to send action request: [#{res.code}] #{res.body}"
-      end
-      r = JSON.parse(res.body)
-      # puts res.body
+      r = process_response(res, :async_request)
       @outputs = Outputs.new(r["outputs"])
       callback.call(@outputs) if callback
       @outputs
     end
+
+    def process_response(res, req_type)
+      case res.code.to_i
+      when 200..299 then # OK
+      else
+        raise Error, "failed to send #{req_type}: [#{res.code}] #{res.content}"
+      end
+      begin
+        return JSON.parse(res.content)
+      rescue JSON::ParserError => e
+        $stderr.puts("\e[31m[#{e.class}] #{e.message}\e[0m\n#{res.content}")
+        raise e
+      end
+    end
+    private :process_response
 
     # 条件に該当するデータを取得
     # @param [String] name 対象となるコレクション名
