@@ -11,6 +11,9 @@ module Libgss
     class Error < StandardError
     end
 
+    class SignatureError < Error
+    end
+
     STATUS_PREPARING = 0
     STATUS_SENDING   = 1
     STATUS_WAITING   = 2
@@ -68,14 +71,20 @@ module Libgss
       else
         raise Error, "failed to send #{req_type}: [#{res.code}] #{res.content}"
       end
-      begin
-        return JSON.parse(res.content)
-      rescue JSON::ParserError => e
-        $stderr.puts("\e[31m[#{e.class}] #{e.message}\e[0m\n#{res.content}")
-        raise e
+      verify_signature(res) do |content|
+        begin
+          JSON.parse(content)
+        rescue JSON::ParserError => e
+          $stderr.puts("\e[31m[#{e.class}] #{e.message}\e[0m\n#{content}")
+          raise e
+        end
       end
     end
     private :process_response
+
+    def verify_signature(res)
+      return yield(res.content) if block_given?
+    end
 
     # 条件に該当するデータを取得
     # @param [String] name 対象となるコレクション名
