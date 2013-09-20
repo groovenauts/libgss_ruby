@@ -15,8 +15,6 @@ module Libgss
     class Error < StandardError
     end
 
-    API_VERSION = "1.0.0".freeze
-
     attr_reader :base_url
     attr_reader :ssl_base_url
     attr_reader :ssl_disabled
@@ -50,6 +48,7 @@ module Libgss
     # @param [String] base_url_or_host 接続先の基準となるURLあるいはホスト名
     # @param [Hash] options オプション
     # @option options [String]  :platform 接続先のGSSサーバの認証のプラットフォーム。デフォルトは"fontana"。
+    # @option options [String]  :api_version APIのバージョン。デフォルトは "1.0.0"
     # @option options [String]  :player_id 接続に使用するプレイヤのID
     # @option options [String]  :consumer_secret GSSサーバとクライアントの間で行う署名の検証に使用される文字列。
     # @option options [Boolean] :ignore_oauth_nonce OAuth認証時にoauth_nonceとoauth_timestampを使用しないかどうか。
@@ -72,6 +71,7 @@ module Libgss
       end
       @ssl_base_url = @base_url if @ssl_disabled
       @platform  = options[:platform] || "fontana"
+      @api_version = options[:api_version] || "1.0.0"
       @player_id = options[:player_id]
       @player_info = options[:player_info] || {}
 
@@ -258,15 +258,15 @@ module Libgss
     end
 
     def action_url
-      @action_url ||= base_url + "/api/#{API_VERSION}/actions.json?auth_token=#{auth_token}"
+      @action_url ||= base_url + "/api/#{api_version}/actions.json?auth_token=#{auth_token}"
     end
 
     def async_action_url
-      @async_action_url ||= base_url + "/api/#{API_VERSION}/async_actions.json?auth_token=#{auth_token}"
+      @async_action_url ||= base_url + "/api/#{api_version}/async_actions.json?auth_token=#{auth_token}"
     end
 
     def async_result_url
-      @async_result_url ||= base_url + "/api/#{API_VERSION}/async_results.json?auth_token=#{auth_token}"
+      @async_result_url ||= base_url + "/api/#{api_version}/async_results.json?auth_token=#{auth_token}"
     end
 
     def public_asset_url(asset_path)
@@ -275,7 +275,7 @@ module Libgss
 
     def protected_asset_url(asset_path)
       path = URI.encode(asset_path) # パラメータとして渡されるのでURLエンコードする必要がある
-      @action_url ||= base_url + "/api/#{API_VERSION}/assets?path=#{path}&auth_token=#{auth_token}"
+      @action_url ||= base_url + "/api/#{api_version}/assets?path=#{path}&auth_token=#{auth_token}"
     end
   end
 
