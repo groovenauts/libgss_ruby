@@ -204,7 +204,6 @@ module Libgss
         HttpClientWithSignatureKey.new(@httpclient, self)
     end
 
-
     private
 
     def req_headers

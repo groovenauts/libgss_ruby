@@ -82,8 +82,78 @@ module Libgss
     end
     private :process_response
 
-    def verify_signature(res)
-      return yield(res.content) if block_given?
+    def verify_signature(res, &block)
+      case network.api_version
+      when "1.0.0" then verify_signature_on_headers(res, &block)
+      when "1.1.0" then verify_signature_included_body(res, &block)
+      else
+        raise Error, "Unsupported API version: #{network.api_version}"
+      end
+    end
+
+    def verify_signature_on_headers(res)
+      content = res.content
+      header_consumer_key = res.headers["Res-Sign-Consumer-Key"] || ""
+      header_nonce        = res.headers["Res-Sign-Nonce"]
+      header_timestamp    = res.headers["Res-Sign-Timestamp"]
+      header_signature    = res.headers["Res-Sign-Signature"]
+      res_hash = {
+        "uri" => "",
+        "method" => "",
+        "parameters" => {
+          "body" => content,
+          "oauth_consumer_key" => header_consumer_key,
+          "oauth_token" => network.auth_token,
+          "oauth_signature_method" => "HMAC-SHA1",
+          "oauth_nonce" => header_nonce,
+          "oauth_timestamp" => header_timestamp
+        }
+      }
+      verify_signature_by_oauth(header_signature, res_hash) do
+        return yield(content)
+      end
+    end
+
+    def verify_signature_included_body(res)
+      resp = nil
+      begin
+        resp = JSON.parse(res.content)
+      rescue JSON::ParserError => e
+        $stderr.puts("\e[31m[#{e.class}] #{e.message}\e[0m\n#{res.content}")
+        raise e
+      end
+      content = resp["body"]
+      header_consumer_key = resp["res_sign_consumer_key"] || ""
+      header_nonce        = resp["res_sign_nonce"]
+      header_timestamp    = resp["res_sign_timestamp"]
+      header_signature    = resp["res_sign_signature"]
+      res_hash = {
+        "uri" => "",
+        "method" => "",
+        "parameters" => {
+          "body" => content,
+          "oauth_consumer_key" => header_consumer_key,
+          "oauth_token" => network.auth_token,
+          "oauth_signature_method" => "HMAC-SHA1",
+          "oauth_nonce" => header_nonce,
+          "oauth_timestamp" => header_timestamp
+        }
+      }
+      verify_signature_by_oauth(header_signature, res_hash) do
+        return yield(content)
+      end
+    end
+
+    def verify_signature_by_oauth(signature, res_hash)
+      s = OAuth::Signature.build(res_hash){ [ network.signature_key, network.consumer_secret] }
+      # puts "res_hash: " << res_hash.inspect
+      # puts "signature_key: " << network.signature_key.inspect
+      # puts "consumer_secret: " << network.consumer_secret.inspect
+      # puts "signature_base_string: " << s.signature_base_string
+      unless signature == s.signature
+        raise SignatureError, "invalid signature or something"
+      end
+      return yield if block_given?
     end
 
     # 条件に該当するデータを取得
