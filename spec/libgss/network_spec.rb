@@ -67,6 +67,28 @@ describe Libgss::Network do
       it_should_behave_like "Libgss::Network#login success",
         Proc.new{ network.player_id = nil },
         Proc.new{ network.player_id.should_not == nil }
+
+      it "update player_info with generate_device_id" do
+        network.player_info.should == {}
+        network.generate_device_id
+        network.login!
+        keys = [:id, :device_id, :device_type]
+        network.player_info.keys =~ keys
+        keys.each do |k|
+          network.player_info[k].should_not be_nil
+        end
+      end
+
+      it "update player_info with generate_device_id and extra data" do
+        network.player_info.should == {}
+        network.generate_device_id
+        network.login!(foo: "bar")
+        keys = [:id, :device_id, :device_type, :foo]
+        network.player_info.keys =~ keys
+        keys.each do |k|
+          network.player_info[k].should_not be_nil
+        end
+      end
     end
 
     context "failure with unregistered (maybe invalid) player_id" do

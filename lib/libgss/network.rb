@@ -101,8 +101,9 @@ module Libgss
     # @option extra [Integer] :device_id デバイス識別子
     # @return [Boolean] ログインに成功した場合はtrue、失敗した場合はfalse
     def login(extra = {})
-      attrs = @player_info.merge({ "player[id]" => player_id })
-      extra.each{|k, v| attrs[ "player[#{k}]" ] = v }
+      @player_info[:id] = player_id
+      @player_info.update(extra)
+      attrs = @player_info.each_with_object({}){|(k,v), d| d[ "player[#{k}]" ] = v }
       res = Libgss.with_retry("login") do
         @httpclient.post(login_url, attrs, req_headers)
       end
