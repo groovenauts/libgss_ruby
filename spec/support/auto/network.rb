@@ -1,3 +1,4 @@
+
 def new_network(player_id = "1000001")
   new_network_with_options({}, player_id)
 end

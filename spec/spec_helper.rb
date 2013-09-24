@@ -21,6 +21,8 @@ require 'active_support/dependencies'
 
 Time.zone = ActiveSupport::TimeZone.zones_map["Tokyo"]
 
+# require File.expand_path("../../fontana_sample/spec/spec_helper", __FILE__)
+
 d = File.expand_path("../support/models", __FILE__)
 "Directory not found: #{d.inspect}" unless Dir.exist?(d)
 ActiveSupport::Dependencies.autoload_paths << d
@@ -42,3 +44,4 @@ RSpec.configure do |config|
   OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
   config.include FactoryGirl::Syntax::Methods
 end
+
