@@ -59,7 +59,7 @@ module Libgss
       res = Libgss.with_retry("action_request") do
         network.httpclient_for_action.post(action_url, {"inputs" => @actions.map(&:to_hash)}.to_json, req_headers)
       end
-      r = process_response(res, :async_request)
+      r = process_response(res, :action_request)
       @outputs = Outputs.new(r["outputs"])
       callback.call(@outputs) if callback
       @outputs
