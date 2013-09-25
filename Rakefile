@@ -4,8 +4,8 @@ require "rspec/core/rake_task"
 
 RSpec::Core::RakeTask.new(:spec)
 
-ENV['DEFAULT_HTTP_PORT'] ||= '3000'
-ENV['DEFAULT_HTTPS_PORT'] ||= '3001'
+ENV['DEFAULT_HTTP_PORT'] ||= '4000'
+ENV['DEFAULT_HTTPS_PORT'] ||= '4001'
 
 require 'fileutils'
 
