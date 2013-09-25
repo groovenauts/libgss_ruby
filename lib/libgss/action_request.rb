@@ -21,12 +21,13 @@ module Libgss
 
 
     # 読み込みのみ、書き込み不可
+    attr_reader :network
     attr_reader :action_url, :req_headers
     attr_reader :status, :outputs
 
     # コンストラクタ
-    def initialize(httpclient, action_url, req_headers)
-      @httpclient = httpclient
+    def initialize(network, action_url, req_headers)
+      @network = network
       @action_url = action_url
       @req_headers = req_headers
       @status = STATUS_PREPARING
@@ -36,7 +37,7 @@ module Libgss
 
     def inspect
       r = "#<#{self.class.name}:#{self.object_id} "
-      fields = (instance_variables - [:@httpclient]).map{|f| "#{f}=#{instance_variable_get(f).inspect}"}
+      fields = (instance_variables - [:@network]).map{|f| "#{f}=#{instance_variable_get(f).inspect}"}
       r << fields.join(", ") << ">"
     end
 
@@ -53,7 +54,7 @@ module Libgss
     # アクション群を実行するために実際にHTTPリクエストを送信します。
     def send_request(&callback)
       res = Libgss.with_retry("action_request") do
-        @httpclient.post(action_url, {"inputs" => @actions.map(&:to_hash)}.to_json, req_headers)
+        network.httpclient_for_action.post(action_url, {"inputs" => @actions.map(&:to_hash)}.to_json, req_headers)
       end
       r = process_response(res, :async_request)
       @outputs = Outputs.new(r["outputs"])
