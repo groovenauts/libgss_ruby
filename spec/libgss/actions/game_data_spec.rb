@@ -33,25 +33,26 @@ describe Libgss::ActionRequest do
     "read_notifications"=>[]
   }
 
-  describe "#get_by_game_data" do
-    before do
-      request_fixture_load("01_basic")
-    end
-
-    it "basic call" do
-      callback_called = false
-      request.get_by_game_data
-      request.send_request do |outputs|
-        callback_called = true
-        outputs.length.should == 1
-        game_data = outputs.first["result"]
-        # AppSeedで定義されているデータの確認
-        # game_data.select!{|k,v| expected_game_data_1000001.keys.include?(k) }
-        game_data.should == expected_game_data_1000001
+  [:get_game_data, :get_by_game_data].each do |action|
+    describe "##{action}" do
+      before do
+        request_fixture_load("01_basic")
       end
-      callback_called.should == true
-    end
 
+      it action do
+        callback_called = false
+        request.send(action)
+        request.send_request do |outputs|
+          callback_called = true
+          outputs.length.should == 1
+          game_data = outputs.first["result"]
+          # AppSeedで定義されているデータの確認
+          # game_data.select!{|k,v| expected_game_data_1000001.keys.include?(k) }
+          game_data.should == expected_game_data_1000001
+        end
+        callback_called.should == true
+      end
+    end
   end
 
   describe "#update" do
