@@ -129,4 +129,73 @@ describe "response_signature" do
   end
 
 
+
+
+  shared_examples_for "async_status_request with response_signature" do
+    context "valid" do
+      it do
+        req = @network.new_async_action_request
+        req.server_time
+        req.send_request
+      end
+    end
+
+    context "invalid response body" do
+      before do
+        # 通信経路上で実際の時刻より過去の時刻を返すようにレスポンスを改ざんしていることを
+        # 想定して、レスポンスオブジェクトのcontentだけ内容を書き換えます。
+        @cheat = Proc.new do |res|
+          cheated = res.content.dup
+          cheated.sub!(/"result":(\d+)/){ "\"result\":%d" % ($1.to_i - 30.days) }
+          cheated.sub!(/\\"result\\":(\d+)/){ "\\\"result\\\":%d" % ($1.to_i - 30.days) }
+          res.stub(:content).and_return(cheated)
+        end
+      end
+
+      it "raise SignatureError" do
+        req = @network.new_async_action_request
+        req.server_time
+        req.response_hook = @cheat
+        expect{ req.async_status([@async_action02.action_id]) }.to raise_error(Libgss::ActionRequest::SignatureError)
+      end
+
+      it "with skip_verifying_signature" do
+        @network.skip_verifying_signature = true
+        req = @network.new_async_action_request
+        req.server_time
+        req.response_hook = @cheat
+        expect{ req.async_status([@async_action02.action_id]) }.to_not raise_error(Libgss::ActionRequest::SignatureError)
+        # 検証をスキップしているので、通信経路上で改ざんされたデータを取得できてしまう
+        req.outputs.to_a.should be_a(Array)
+        req.outputs.first.should be_a(Hash)
+        req.outputs.first["id"].should == @async_action02.action_id
+        req.outputs.first["result"].should be_a(Integer)
+      end
+    end
+  end
+
+  describe "async_status_request" do
+    before do
+      Player.delete_all
+      AsyncAction.delete_all
+      @async_action02 = FactoryGirl.create(:async_action02)
+      @player01 = @async_action02.player
+    end
+
+    context "default" do
+      before{ @network = new_network(@player01.player_id).login! }
+      it_should_behave_like "async_status_request with response_signature"
+    end
+
+    context "1.0.0" do
+      before{ @network = new_network_with_options({api_version: "1.0.0"}, @player01.player_id).login! }
+      it_should_behave_like "async_status_request with response_signature"
+    end
+
+    context "1.1.0" do
+      before{ @network = new_network_with_options({api_version: "1.1.0"}, @player01.player_id).login! }
+      it_should_behave_like "async_status_request with response_signature"
+    end
+  end
+
 end
