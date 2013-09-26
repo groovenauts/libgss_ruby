@@ -11,6 +11,9 @@ module Libgss
     class Error < StandardError
     end
 
+    class SignatureError < Error
+    end
+
     STATUS_PREPARING = 0
     STATUS_SENDING   = 1
     STATUS_WAITING   = 2
@@ -24,6 +27,8 @@ module Libgss
     attr_reader :network
     attr_reader :action_url, :req_headers
     attr_reader :status, :outputs
+
+    attr_accessor :response_hook
 
     # コンストラクタ
     def initialize(network, action_url, req_headers)
@@ -56,26 +61,104 @@ module Libgss
       res = Libgss.with_retry("action_request") do
         network.httpclient_for_action.post(action_url, {"inputs" => @actions.map(&:to_hash)}.to_json, req_headers)
       end
-      r = process_response(res, :async_request)
+      response_hook.call(res) if response_hook # テストでレスポンスを改ざんを再現するために使います
+      r = process_response(res, :action_request)
       @outputs = Outputs.new(r["outputs"])
       callback.call(@outputs) if callback
       @outputs
     end
 
+    # レスポンスの処理を行います
     def process_response(res, req_type)
       case res.code.to_i
       when 200..299 then # OK
       else
         raise Error, "failed to send #{req_type}: [#{res.code}] #{res.content}"
       end
+      verify_signature(res) do |content|
+        begin
+          JSON.parse(content)
+        rescue JSON::ParserError => e
+          $stderr.puts("\e[31m[#{e.class}] #{e.message}\e[0m\n#{content}")
+          raise e
+        end
+      end
+    end
+    private :process_response
+
+    # シグネチャの検証を行います
+    def verify_signature(res, &block)
+      case network.api_version
+      when "1.0.0" then verify_signature_on_headers(res, &block)
+      when "1.1.0" then verify_signature_included_body(res, &block)
+      else
+        raise Error, "Unsupported API version: #{network.api_version}"
+      end
+    end
+
+    private
+
+    # ヘッダから検証のための諸情報を取得します。
+    # キーの名前がbodyのJSONから取得する場合と微妙に違っているので注意してください。
+    def verify_signature_on_headers(res, &block)
+      content = res.content
+      attrs = {
+        content:      content,
+        consumer_key: res.headers["Res-Sign-Consumer-Key"] || "",
+        nonce:        res.headers["Res-Sign-Nonce"],
+        timestamp:    res.headers["Res-Sign-Timestamp"],
+      }
+      verify_signature_by_oauth(res.headers["Res-Sign-Signature"], attrs, &block)
+    end
+
+    # bodyのJSONから検証のための諸情報を取得します。
+    # キーの名前がヘッダから取得する場合と微妙に違っているので注意してください。
+    def verify_signature_included_body(res, &block)
+      resp = nil
       begin
-        return JSON.parse(res.content)
+        resp = JSON.parse(res.content)
       rescue JSON::ParserError => e
         $stderr.puts("\e[31m[#{e.class}] #{e.message}\e[0m\n#{res.content}")
         raise e
       end
+      content = resp["body"]
+      attrs = {
+        content:      content,
+        consumer_key: resp["res_sign_consumer_key"] || "",
+        nonce:        resp["res_sign_nonce"],
+        timestamp:    resp["res_sign_timestamp"],
+      }
+      verify_signature_by_oauth(resp["res_sign_signature"], attrs, &block)
     end
-    private :process_response
+
+    def verify_signature_by_oauth(signature, attrs)
+      if network.skip_verifying_signature?
+        return yield(attrs[:content]) if block_given?
+      end
+      res_hash = {
+        "uri" => "",
+        "method" => "",
+        "parameters" => {
+          "body" => attrs[:content],
+          "oauth_consumer_key" => attrs[:consumer_key],
+          "oauth_token" => network.auth_token,
+          "oauth_signature_method" => "HMAC-SHA1",
+          "oauth_nonce" => attrs[:nonce],
+          "oauth_timestamp" => attrs[:timestamp]
+        }
+      }
+      s = OAuth::Signature.build(res_hash){ [ network.signature_key, network.consumer_secret] }
+      # puts "res_hash: " << res_hash.inspect
+      # puts "signature_key: " << network.signature_key.inspect
+      # puts "consumer_secret: " << network.consumer_secret.inspect
+      # puts "signature_base_string: " << s.signature_base_string
+      unless signature == s.signature
+        raise SignatureError, "invalid signature or something"
+      end
+      return yield(attrs[:content]) if block_given?
+    end
+
+    public
 
     # 条件に該当するデータを取得
     # @param [String] name 対象となるコレクション名
@@ -88,6 +171,7 @@ module Libgss
       args[:order] = order if order
       add_action(args)
     end
+    alias_method :all, :find_all
 
     # ページネーション付きで条件に該当するデータを取得
     # @param [String] name 対象となるコレクション名
@@ -124,6 +208,7 @@ module Libgss
       args[:order] = order if order
       add_action(args)
     end
+    alias_method :first, :find_first
 
     # 辞書テーブルからinputに対応するoutputの値を返します。
     # @param [String] name 対象となる辞書のコレクション名
@@ -135,6 +220,7 @@ module Libgss
       args[:conditions] = conditions if conditions
       add_action(args)
     end
+    alias_method :get_dictionary, :get_by_dictionary
 
     # 期間テーブルからinputに対応するoutputの値を返します。
     # @param [String] name 対象となる機関テーブルのコレクション名
@@ -146,6 +232,7 @@ module Libgss
       args[:conditions] = conditions if conditions
       add_action(args)
     end
+    alias_method :get_schedule, :get_by_schedule
 
     # 整数範囲テーブルからinputに対応するoutputの値を返します。
     # @param [String] name 対象となる整数範囲テーブルのコレクション名
@@ -157,6 +244,7 @@ module Libgss
       args[:conditions] = conditions if conditions
       add_action(args)
     end
+    alias_method :get_int_range, :get_by_int_range
 
     # 確率テーブルからinputに対応するoutputの値を返します。
     # diceがあるのであまり使われないはず。
@@ -170,6 +258,7 @@ module Libgss
       args[:conditions] = conditions if conditions
       add_action(args)
     end
+    alias_method :get_probability, :get_by_probability
 
     # プレイヤーからplayer_idに対応するプレイヤーを返します
     #
@@ -183,6 +272,7 @@ module Libgss
       args[:player_id] = player_id.to_s if player_id
       add_action(args)
     end
+    alias_method :get_player, :get_by_player
 
     # ゲームデータからplayer_idに対応するゲームデータを返します
     #
@@ -196,6 +286,7 @@ module Libgss
       args[:player_id] = player_id.to_s if player_id
       add_action(args)
     end
+    alias_method :get_game_data, :get_by_game_data
 
 
 
