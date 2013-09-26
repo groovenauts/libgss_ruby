@@ -28,6 +28,8 @@ module Libgss
     attr_reader :action_url, :req_headers
     attr_reader :status, :outputs
 
+    attr_accessor :response_hook
+
     # コンストラクタ
     def initialize(network, action_url, req_headers)
       @network = network
@@ -59,6 +61,7 @@ module Libgss
       res = Libgss.with_retry("action_request") do
         network.httpclient_for_action.post(action_url, {"inputs" => @actions.map(&:to_hash)}.to_json, req_headers)
       end
+      response_hook.call(res) if response_hook # テストでレスポンスを改ざんを再現するために使います
       r = process_response(res, :action_request)
       @outputs = Outputs.new(r["outputs"])
       callback.call(@outputs) if callback
@@ -97,7 +100,7 @@ module Libgss
 
     # ヘッダから検証のための諸情報を取得します。
     # キーの名前がbodyのJSONから取得する場合と微妙に違っているので注意してください。
-    def verify_signature_on_headers(res)
+    def verify_signature_on_headers(res, &block)
       content = res.content
       attrs = {
         content:      content,
@@ -105,14 +108,12 @@ module Libgss
         nonce:        res.headers["Res-Sign-Nonce"],
         timestamp:    res.headers["Res-Sign-Timestamp"],
       }
-      verify_signature_by_oauth(res.headers["Res-Sign-Signature"], attrs) do
-        return yield(content)
-      end
+      verify_signature_by_oauth(res.headers["Res-Sign-Signature"], attrs, &block)
     end
 
     # bodyのJSONから検証のための諸情報を取得します。
     # キーの名前がヘッダから取得する場合と微妙に違っているので注意してください。
-    def verify_signature_included_body(res)
+    def verify_signature_included_body(res, &block)
       resp = nil
       begin
         resp = JSON.parse(res.content)
@@ -127,12 +128,13 @@ module Libgss
         nonce:        resp["res_sign_nonce"],
         timestamp:    resp["res_sign_timestamp"],
       }
-      verify_signature_by_oauth(resp["res_sign_signature"], attrs) do
-        return yield(content)
-      end
+      verify_signature_by_oauth(resp["res_sign_signature"], attrs, &block)
     end
 
     def verify_signature_by_oauth(signature, attrs)
+      if network.skip_verifying_signature?
+        return yield(attrs[:content]) if block_given?
+      end
       res_hash = {
         "uri" => "",
         "method" => "",
@@ -153,7 +155,7 @@ module Libgss
       unless signature == s.signature
         raise SignatureError, "invalid signature or something"
       end
-      return yield if block_given?
+      return yield(attrs[:content]) if block_given?
     end
 
     public

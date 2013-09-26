@@ -37,6 +37,8 @@ module Libgss
     attr_accessor :client_version
     attr_accessor :device_type_cd
 
+    attr_accessor :skip_verifying_signature
+
     PRODUCTION_HTTP_PORT  =  80
     PRODUCTION_HTTPS_PORT = 443
 
@@ -55,7 +57,8 @@ module Libgss
     # @option options [String]  :oauth_nonce OAuth認証のoauth_nonceパラメータ
     # @option options [Integer] :oauth_timestamp OAuth認証のoauth_timestampパラメータ
     # @option options [Boolean] :ssl_disabled SSLを無効にするかどうか。
-    # @option options [Boolean] :ignore_signature_key シグネチャキーによる署名を行うかどうか
+    # @option options [Boolean] :ignore_signature_key シグネチャキーによる署名を無視するかどうか
+    # @option options [Boolean] :skip_verifying_signature レスポンスのシグネチャキーによる署名の検証をスキップするかどうか
     # @option options [Integer] :device_type_cd GSS/fontanaに登録されたデバイス種別
     # @option options [String]  :client_version GSS/fontanaに登録されたクライアントリリースのバージョン
     def initialize(base_url_or_host, options = {})
@@ -83,6 +86,8 @@ module Libgss
 
       @device_type_cd = options[:device_type_cd]
       @client_version = options[:client_version]
+
+      @skip_verifying_signature = options[:skip_verifying_signature]
 
       @httpclient = HTTPClient.new
       @httpclient.ssl_config.verify_mode = nil # 自己署名の証明書をOKにする
@@ -128,6 +133,11 @@ module Libgss
     # @return [Boolean] コンストラクタに指定されたignore_signature_keyを返します
     def ignore_signature_key?
       @ignore_signature_key
+    end
+
+    # @return [Boolean] コンストラクタに指定されたskip_verifying_signatureを返します
+    def skip_verifying_signature?
+      @skip_verifying_signature
     end
 
     # load_player_id メソッドをオーバーライドした場合に使用することを想定しています。
