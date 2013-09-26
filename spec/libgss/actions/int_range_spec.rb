@@ -11,11 +11,12 @@ describe Libgss::ActionRequest do
   end
 
 
-  describe "#get_by_int_range" do
-    shared_examples_for "Libgss::ActionRequest#get_by_int_range" do |input, output, conditions|
-      it do
+  shared_examples_for "Libgss::ActionRequest#get_by_int_range" do |input, output, conditions|
+    [:get_int_range, :get_by_int_range].each do |action|
+      describe "##{action}" do
+      it action do
         callback_called = false
-        request.get_by_int_range("RequiredExperience", input, conditions)
+        request.send(action, "RequiredExperience", input, conditions)
         request.send_request do |outputs|
           callback_called = true
           outputs.length.should == 1
@@ -23,7 +24,10 @@ describe Libgss::ActionRequest do
         end
         callback_called.should == true
       end
+      end
     end
+
+  end
 
     it_should_behave_like "Libgss::ActionRequest#get_by_int_range",   0,  1, nil
     it_should_behave_like "Libgss::ActionRequest#get_by_int_range",   9,  1, nil
@@ -37,6 +41,5 @@ describe Libgss::ActionRequest do
     it_should_behave_like "Libgss::ActionRequest#get_by_int_range",  10, nil, cond
     it_should_behave_like "Libgss::ActionRequest#get_by_int_range",  24, nil, cond
     it_should_behave_like "Libgss::ActionRequest#get_by_int_range",  25, nil, cond
-  end
 
 end

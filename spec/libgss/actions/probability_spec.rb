@@ -10,12 +10,13 @@ describe Libgss::ActionRequest do
     network.new_action_request
   end
 
-  describe "#get_by_probability" do
 
-    shared_examples_for "Libgss::ActionRequest#get_by_probability" do |value, conditions, result|
+  shared_examples_for "Libgss::ActionRequest#get_by_probability" do |value, conditions, result|
+    [:get_probability, :get_by_probability].each do |action|
+      describe "##{action}" do
       it "#{value.inspect} with #{conditions.inspect} returns #{result.inspect}" do
         callback_called = false
-        request.get_by_probability("Composition1", value, conditions)
+        request.send(action, "Composition1", value, conditions)
         request.send_request do |outputs|
           callback_called = true
           outputs.length.should == 1
@@ -25,7 +26,10 @@ describe Libgss::ActionRequest do
         end
         callback_called.should == true
       end
+      end
     end
+
+  end
 
     it_should_behave_like "Libgss::ActionRequest#get_by_probability", 10002, nil, 60
     it_should_behave_like "Libgss::ActionRequest#get_by_probability", 20007, nil, 20
@@ -37,7 +41,6 @@ describe Libgss::ActionRequest do
       it_should_behave_like "Libgss::ActionRequest#get_by_probability", {"20002" => 2}, {"element" => { "20002" => 1, "20006" => 1 } }, 80
       it_should_behave_like "Libgss::ActionRequest#get_by_probability", {"20002" => 2}, {"element" => { "20002" => 1, "20006" => 2 } }, nil
     end
-  end
 
   describe "#dice" do
     it do

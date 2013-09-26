@@ -10,10 +10,11 @@ describe Libgss::ActionRequest do
     network.new_action_request
   end
 
-  describe "#find_all" do
+  [:all, :find_all].each do |action|
+    describe "##{action}" do
     it "basic call" do
       callback_called = false
-      request.find_all("Item")
+      request.send(action, "Item")
       request.send_request do |outputs|
         callback_called = true
         outputs.length.should == 1
@@ -29,7 +30,7 @@ describe Libgss::ActionRequest do
 
     it "with conditions" do
       callback_called = false
-      request.find_all("Item", {"item_cd$gte" => 20005, "item_cd$lte" => 20008})
+      request.send(action, "Item", {"item_cd$gte" => 20005, "item_cd$lte" => 20008})
       request.send_request do |outputs|
         callback_called = true
         outputs.length.should == 1
@@ -45,7 +46,7 @@ describe Libgss::ActionRequest do
 
     it "with order and conditions" do
       callback_called = false
-      request.find_all("Item", {"item_cd$gte" => 20005, "item_cd$lte" => 20008}, [["item_cd", "desc"]])
+      request.send(action, "Item", {"item_cd$gte" => 20005, "item_cd$lte" => 20008}, [["item_cd", "desc"]])
       request.send_request do |outputs|
         callback_called = true
         outputs.length.should == 1
@@ -54,6 +55,7 @@ describe Libgss::ActionRequest do
         items.map{|item| item["item_cd"]}.should == [20008, 20007, 20006, 20005]
       end
       callback_called.should == true
+    end
     end
   end
 
@@ -96,10 +98,11 @@ describe Libgss::ActionRequest do
     end
   end
 
-  describe "#find_first" do
+  [:first, :find_first].each do |action|
+  describe "##{action}" do
     it "basic call" do
       callback_called = false
-      request.find_first("Item")
+      request.send(action, "Item")
       request.send_request do |outputs|
         callback_called = true
         outputs.length.should == 1
@@ -111,7 +114,7 @@ describe Libgss::ActionRequest do
 
     it "with conditions" do
       callback_called = false
-      request.find_first("Item", {"item_cd$gte" => 20005, "item_cd$lte" => 20008})
+      request.send(action, "Item", {"item_cd$gte" => 20005, "item_cd$lte" => 20008})
       request.send_request do |outputs|
         callback_called = true
         outputs.length.should == 1
@@ -123,7 +126,7 @@ describe Libgss::ActionRequest do
 
     it "with order and conditions" do
       callback_called = false
-      request.find_first("Item", {"item_cd$gte" => 20005, "item_cd$lte" => 20008}, [["item_cd", "desc"]])
+      request.send(action, "Item", {"item_cd$gte" => 20005, "item_cd$lte" => 20008}, [["item_cd", "desc"]])
       request.send_request do |outputs|
         callback_called = true
         outputs.length.should == 1
@@ -132,6 +135,7 @@ describe Libgss::ActionRequest do
       end
       callback_called.should == true
     end
+  end
   end
 
 end

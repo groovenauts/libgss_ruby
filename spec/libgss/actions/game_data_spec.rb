@@ -33,14 +33,15 @@ describe Libgss::ActionRequest do
     "read_notifications"=>[]
   }
 
-  describe "#get_by_game_data" do
+  [:get_game_data, :get_by_game_data].each do |action|
+  describe "##{action}" do
     before do
       request_fixture_load("01_basic")
     end
 
-    it "basic call" do
+    it action do
       callback_called = false
-      request.get_by_game_data
+      request.send(action)
       request.send_request do |outputs|
         callback_called = true
         outputs.length.should == 1
@@ -51,7 +52,7 @@ describe Libgss::ActionRequest do
       end
       callback_called.should == true
     end
-
+    end
   end
 
   describe "#update" do

@@ -169,6 +169,7 @@ module Libgss
       args[:order] = order if order
       add_action(args)
     end
+    alias_method :all, :find_all
 
     # ページネーション付きで条件に該当するデータを取得
     # @param [String] name 対象となるコレクション名
@@ -205,6 +206,7 @@ module Libgss
       args[:order] = order if order
       add_action(args)
     end
+    alias_method :first, :find_first
 
     # 辞書テーブルからinputに対応するoutputの値を返します。
     # @param [String] name 対象となる辞書のコレクション名
@@ -216,6 +218,7 @@ module Libgss
       args[:conditions] = conditions if conditions
       add_action(args)
     end
+    alias_method :get_dictionary, :get_by_dictionary
 
     # 期間テーブルからinputに対応するoutputの値を返します。
     # @param [String] name 対象となる機関テーブルのコレクション名
@@ -227,6 +230,7 @@ module Libgss
       args[:conditions] = conditions if conditions
       add_action(args)
     end
+    alias_method :get_schedule, :get_by_schedule
 
     # 整数範囲テーブルからinputに対応するoutputの値を返します。
     # @param [String] name 対象となる整数範囲テーブルのコレクション名
@@ -238,6 +242,7 @@ module Libgss
       args[:conditions] = conditions if conditions
       add_action(args)
     end
+    alias_method :get_int_range, :get_by_int_range
 
     # 確率テーブルからinputに対応するoutputの値を返します。
     # diceがあるのであまり使われないはず。
@@ -251,6 +256,7 @@ module Libgss
       args[:conditions] = conditions if conditions
       add_action(args)
     end
+    alias_method :get_probability, :get_by_probability
 
     # プレイヤーからplayer_idに対応するプレイヤーを返します
     #
@@ -264,6 +270,7 @@ module Libgss
       args[:player_id] = player_id.to_s if player_id
       add_action(args)
     end
+    alias_method :get_player, :get_by_player
 
     # ゲームデータからplayer_idに対応するゲームデータを返します
     #
@@ -277,6 +284,7 @@ module Libgss
       args[:player_id] = player_id.to_s if player_id
       add_action(args)
     end
+    alias_method :get_game_data, :get_by_game_data
 
 
 
