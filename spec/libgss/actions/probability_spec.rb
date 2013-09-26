@@ -14,33 +14,33 @@ describe Libgss::ActionRequest do
   shared_examples_for "Libgss::ActionRequest#get_by_probability" do |value, conditions, result|
     [:get_probability, :get_by_probability].each do |action|
       describe "##{action}" do
-      it "#{value.inspect} with #{conditions.inspect} returns #{result.inspect}" do
-        callback_called = false
-        request.send(action, "Composition1", value, conditions)
-        request.send_request do |outputs|
-          callback_called = true
-          outputs.length.should == 1
-          obj = outputs.first["result"]
-          # AppSeedで定義されているデータの確認
-          obj.should == result
+        it "#{value.inspect} with #{conditions.inspect} returns #{result.inspect}" do
+          callback_called = false
+          request.send(action, "Composition1", value, conditions)
+          request.send_request do |outputs|
+            callback_called = true
+            outputs.length.should == 1
+            obj = outputs.first["result"]
+            # AppSeedで定義されているデータの確認
+            obj.should == result
+          end
+          callback_called.should == true
         end
-        callback_called.should == true
-      end
       end
     end
 
   end
 
-    it_should_behave_like "Libgss::ActionRequest#get_by_probability", 10002, nil, 60
-    it_should_behave_like "Libgss::ActionRequest#get_by_probability", 20007, nil, 20
+  it_should_behave_like "Libgss::ActionRequest#get_by_probability", 10002, nil, 60
+  it_should_behave_like "Libgss::ActionRequest#get_by_probability", 20007, nil, 20
 
-    context "with conditions" do
-      it_should_behave_like "Libgss::ActionRequest#get_by_probability", 20007, {"element" => { "20002" => 1, "20006" => 1 } }, 20
-      it_should_behave_like "Libgss::ActionRequest#get_by_probability", 20007, {"element" => { "20002" => 1, "20006" => 2 } }, nil
+  context "with conditions" do
+    it_should_behave_like "Libgss::ActionRequest#get_by_probability", 20007, {"element" => { "20002" => 1, "20006" => 1 } }, 20
+    it_should_behave_like "Libgss::ActionRequest#get_by_probability", 20007, {"element" => { "20002" => 1, "20006" => 2 } }, nil
 
-      it_should_behave_like "Libgss::ActionRequest#get_by_probability", {"20002" => 2}, {"element" => { "20002" => 1, "20006" => 1 } }, 80
-      it_should_behave_like "Libgss::ActionRequest#get_by_probability", {"20002" => 2}, {"element" => { "20002" => 1, "20006" => 2 } }, nil
-    end
+    it_should_behave_like "Libgss::ActionRequest#get_by_probability", {"20002" => 2}, {"element" => { "20002" => 1, "20006" => 1 } }, 80
+    it_should_behave_like "Libgss::ActionRequest#get_by_probability", {"20002" => 2}, {"element" => { "20002" => 1, "20006" => 2 } }, nil
+  end
 
   describe "#dice" do
     it do

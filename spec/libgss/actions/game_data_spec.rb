@@ -34,24 +34,24 @@ describe Libgss::ActionRequest do
   }
 
   [:get_game_data, :get_by_game_data].each do |action|
-  describe "##{action}" do
-    before do
-      request_fixture_load("01_basic")
-    end
-
-    it action do
-      callback_called = false
-      request.send(action)
-      request.send_request do |outputs|
-        callback_called = true
-        outputs.length.should == 1
-        game_data = outputs.first["result"]
-        # AppSeedで定義されているデータの確認
-        # game_data.select!{|k,v| expected_game_data_1000001.keys.include?(k) }
-        game_data.should == expected_game_data_1000001
+    describe "##{action}" do
+      before do
+        request_fixture_load("01_basic")
       end
-      callback_called.should == true
-    end
+
+      it action do
+        callback_called = false
+        request.send(action)
+        request.send_request do |outputs|
+          callback_called = true
+          outputs.length.should == 1
+          game_data = outputs.first["result"]
+          # AppSeedで定義されているデータの確認
+          # game_data.select!{|k,v| expected_game_data_1000001.keys.include?(k) }
+          game_data.should == expected_game_data_1000001
+        end
+        callback_called.should == true
+      end
     end
   end
 
