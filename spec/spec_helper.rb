@@ -1,35 +1,44 @@
+# -*- coding: utf-8 -*-
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'libgss'
 require 'tengine/support/yaml_with_erb'
 
-# see https://github.com/tengine/fontana/pull/3
-require 'httpclient'
-def request_fixture_load(fixture_name)
-  c = HTTPClient.new
-  c.post("http://localhost:4000/libgss_test/fixture_loadings/#{fixture_name}.json", "_method" => "put")
-end
+require 'fontana_client_support'
+require 'mongoid'
 
 
-def new_network(url = "http://localhost:4000", player_id = "1000001")
-  config = YAML.load_file(File.expand_path("../../fontana_sample/config/app_garden.yml", __FILE__))
-  opts = {
-    device_type_cd: 1,
-    client_version: "2013073101",
-    consumer_secret: config["consumer_secret"],
-    player_id: player_id,
-    # ssl_disabled: true,
-  }
-  Libgss::Network.new(url, opts)
-end
+Mongoid.logger.level = 0
+log_path = File.expand_path("../../tmp/test.log", __FILE__)
+FileUtils.mkdir_p(File.dirname(log_path))
+logger = Logger.new(log_path)
+logger.level = Logger::DEBUG
+Mongoid.logger = logger
 
-def new_network_with_options(opts={}, url = "http://localhost:4000", player_id = "1000001")
-  config = YAML.load_file(File.expand_path("../../fontana_sample/config/app_garden.yml", __FILE__))
-  opts = {
-    device_type_cd: 1,
-    client_version: "2013073101",
-    consumer_secret: config["consumer_secret"],
-    player_id: player_id,
-    # ssl_disabled: true,
-  }.update(opts)
-  Libgss::Network.new(url, opts)
+
+Mongoid.load!(File.expand_path("../../fontana_sample/config/fontana_mongoid.yml", __FILE__), :development)
+
+require 'active_support/dependencies'
+
+Time.zone = ActiveSupport::TimeZone.zones_map["Tokyo"]
+
+d = File.expand_path("../support/models", __FILE__)
+"Directory not found: #{d.inspect}" unless Dir.exist?(d)
+ActiveSupport::Dependencies.autoload_paths << d
+
+Dir[File.expand_path("../support/auto/**/*.rb", __FILE__)].each {|f| require f}
+
+
+require 'factory_girl'
+FactoryGirl.find_definitions
+
+RSpec.configure do |config|
+  # iOS開発環境が整っていない場合、SSLで接続する https://sandbox.itunes.apple.com/verifyreceipt が
+  # オレオレ証明書を使っているので、その検証をができなくてエラーになってしまいます。
+  # 本来ならば、信頼する証明書として追加する方が良いと思われますが、
+  # ( http://d.hatena.ne.jp/komiyak/20130508/1367993536 )
+  # 証明書自身の検証はローカルの開発環境で行うことができるので、ここでは単純に検証をスキップする
+  # ように設定してしまいます。
+  require 'openssl'
+  OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
+  config.include FactoryGirl::Syntax::Methods
 end

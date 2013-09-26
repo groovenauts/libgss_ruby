@@ -30,7 +30,7 @@ describe Libgss::Network do
 
   describe "#initialize" do
     context "with_trail_slash" do
-      let(:target){ new_network("http://localhost:4000/") }
+      let(:target){ new_network_with_options(url: "http://localhost:4000/") }
       it{ target.base_url.should == network.base_url }
       it{ target.ssl_base_url.should == network.ssl_base_url }
     end

@@ -139,12 +139,12 @@ module Libgss
 
     # @return [Libgss::ActionRequest] アクション用リクエストを生成して返します
     def new_action_request
-      ActionRequest.new(httpclient_for_action, action_url, req_headers)
+      ActionRequest.new(self, action_url, req_headers)
     end
 
     # @return [Libgss::AsyncActionRequest] 非同期アクション用リクエストを生成して返します
     def new_async_action_request
-      AsyncActionRequest.new(httpclient_for_action, async_action_url, async_result_url, req_headers)
+      AsyncActionRequest.new(self, async_action_url, async_result_url, req_headers)
     end
 
     # @return [Libgss::AssetRequest] 公開アセットを取得するリクエストを生成して返します
@@ -198,6 +198,13 @@ module Libgss
       @uuid_gen ||= UUID.new
     end
 
+    def httpclient_for_action
+      @httpclient_for_action ||=
+        @ignore_signature_key ? @httpclient :
+        HttpClientWithSignatureKey.new(@httpclient, self)
+    end
+
+
     private
 
     def req_headers
@@ -205,12 +212,6 @@ module Libgss
         "X-Device-Type" => device_type_cd,
         "X-Client-Version" => client_version,
       }
-    end
-
-    def httpclient_for_action
-      @httpclient_for_action ||=
-        @ignore_signature_key ? @httpclient :
-        HttpClientWithSignatureKey.new(@httpclient, self)
     end
 
     # ストレージからplayer_idをロードします
