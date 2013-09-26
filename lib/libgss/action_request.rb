@@ -65,7 +65,7 @@ module Libgss
       @outputs
     end
 
-    # レスポンスの処理を行います。
+    # レスポンスの処理を行います
     def process_response(res, req_type)
       case res.code.to_i
       when 200..299 then # OK
@@ -93,27 +93,19 @@ module Libgss
       end
     end
 
+    private
+
     # ヘッダから検証のための諸情報を取得します。
     # キーの名前がbodyのJSONから取得する場合と微妙に違っているので注意してください。
     def verify_signature_on_headers(res)
       content = res.content
-      header_consumer_key = res.headers["Res-Sign-Consumer-Key"] || ""
-      header_nonce        = res.headers["Res-Sign-Nonce"]
-      header_timestamp    = res.headers["Res-Sign-Timestamp"]
-      header_signature    = res.headers["Res-Sign-Signature"]
-      res_hash = {
-        "uri" => "",
-        "method" => "",
-        "parameters" => {
-          "body" => content,
-          "oauth_consumer_key" => header_consumer_key,
-          "oauth_token" => network.auth_token,
-          "oauth_signature_method" => "HMAC-SHA1",
-          "oauth_nonce" => header_nonce,
-          "oauth_timestamp" => header_timestamp
-        }
+      attrs = {
+        content:      content,
+        consumer_key: res.headers["Res-Sign-Consumer-Key"] || "",
+        nonce:        res.headers["Res-Sign-Nonce"],
+        timestamp:    res.headers["Res-Sign-Timestamp"],
       }
-      verify_signature_by_oauth(header_signature, res_hash) do
+      verify_signature_by_oauth(res.headers["Res-Sign-Signature"], attrs) do
         return yield(content)
       end
     end
@@ -129,28 +121,30 @@ module Libgss
         raise e
       end
       content = resp["body"]
-      resp_consumer_key = resp["res_sign_consumer_key"] || ""
-      resp_nonce        = resp["res_sign_nonce"]
-      resp_timestamp    = resp["res_sign_timestamp"]
-      resp_signature    = resp["res_sign_signature"]
-      res_hash = {
-        "uri" => "",
-        "method" => "",
-        "parameters" => {
-          "body" => content,
-          "oauth_consumer_key" => resp_consumer_key,
-          "oauth_token" => network.auth_token,
-          "oauth_signature_method" => "HMAC-SHA1",
-          "oauth_nonce" => resp_nonce,
-          "oauth_timestamp" => resp_timestamp
-        }
+      attrs = {
+        content:      content,
+        consumer_key: resp["res_sign_consumer_key"] || "",
+        nonce:        resp["res_sign_nonce"],
+        timestamp:    resp["res_sign_timestamp"],
       }
-      verify_signature_by_oauth(resp_signature, res_hash) do
+      verify_signature_by_oauth(resp["res_sign_signature"], attrs) do
         return yield(content)
       end
     end
 
-    def verify_signature_by_oauth(signature, res_hash)
+    def verify_signature_by_oauth(signature, attrs)
+      res_hash = {
+        "uri" => "",
+        "method" => "",
+        "parameters" => {
+          "body" => attrs[:content],
+          "oauth_consumer_key" => attrs[:consumer_key],
+          "oauth_token" => network.auth_token,
+          "oauth_signature_method" => "HMAC-SHA1",
+          "oauth_nonce" => attrs[:nonce],
+          "oauth_timestamp" => attrs[:timestamp]
+        }
+      }
       s = OAuth::Signature.build(res_hash){ [ network.signature_key, network.consumer_secret] }
       # puts "res_hash: " << res_hash.inspect
       # puts "signature_key: " << network.signature_key.inspect
@@ -161,6 +155,8 @@ module Libgss
       end
       return yield if block_given?
     end
+
+    public
 
     # 条件に該当するデータを取得
     # @param [String] name 対象となるコレクション名
