@@ -65,6 +65,7 @@ module Libgss
       @outputs
     end
 
+    # レスポンスの処理を行います。
     def process_response(res, req_type)
       case res.code.to_i
       when 200..299 then # OK
@@ -82,6 +83,7 @@ module Libgss
     end
     private :process_response
 
+    # シグネチャの検証を行います
     def verify_signature(res, &block)
       case network.api_version
       when "1.0.0" then verify_signature_on_headers(res, &block)
@@ -91,6 +93,8 @@ module Libgss
       end
     end
 
+    # ヘッダから検証のための諸情報を取得します。
+    # キーの名前がbodyのJSONから取得する場合と微妙に違っているので注意してください。
     def verify_signature_on_headers(res)
       content = res.content
       header_consumer_key = res.headers["Res-Sign-Consumer-Key"] || ""
@@ -114,6 +118,8 @@ module Libgss
       end
     end
 
+    # bodyのJSONから検証のための諸情報を取得します。
+    # キーの名前がヘッダから取得する場合と微妙に違っているので注意してください。
     def verify_signature_included_body(res)
       resp = nil
       begin
@@ -123,23 +129,23 @@ module Libgss
         raise e
       end
       content = resp["body"]
-      header_consumer_key = resp["res_sign_consumer_key"] || ""
-      header_nonce        = resp["res_sign_nonce"]
-      header_timestamp    = resp["res_sign_timestamp"]
-      header_signature    = resp["res_sign_signature"]
+      resp_consumer_key = resp["res_sign_consumer_key"] || ""
+      resp_nonce        = resp["res_sign_nonce"]
+      resp_timestamp    = resp["res_sign_timestamp"]
+      resp_signature    = resp["res_sign_signature"]
       res_hash = {
         "uri" => "",
         "method" => "",
         "parameters" => {
           "body" => content,
-          "oauth_consumer_key" => header_consumer_key,
+          "oauth_consumer_key" => resp_consumer_key,
           "oauth_token" => network.auth_token,
           "oauth_signature_method" => "HMAC-SHA1",
-          "oauth_nonce" => header_nonce,
-          "oauth_timestamp" => header_timestamp
+          "oauth_nonce" => resp_nonce,
+          "oauth_timestamp" => resp_timestamp
         }
       }
-      verify_signature_by_oauth(header_signature, res_hash) do
+      verify_signature_by_oauth(resp_signature, res_hash) do
         return yield(content)
       end
     end
