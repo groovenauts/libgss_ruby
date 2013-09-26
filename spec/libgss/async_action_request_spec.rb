@@ -72,17 +72,6 @@ describe Libgss::AsyncActionRequest do
   describe "async_status(POST: async_results.json)" do
 
     context "working async_action" do
-    it do
-      r = network.new_async_action_request
-      r.server_time
-      r.send_request.to_a.should == [{"id" => 1, "status" => "executing" }]
-    end
-  end
-
-
-  describe "async_status" do
-
-    context "working async_action" do
 
       before do
         Player.delete_all
@@ -109,7 +98,7 @@ describe Libgss::AsyncActionRequest do
 
       it do
         r = network.new_async_action_request
-        r.async_status(['2']).to_a.should == [{"id" => '2', "result" => 1379990870}]
+        r.async_status([2]).to_a.should == [{"id" => 2, "result" => 1379990870}]
       end
     end
 
