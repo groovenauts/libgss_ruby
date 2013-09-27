@@ -167,10 +167,18 @@ module Libgss
       AssetRequest.new(@httpclient, protected_asset_url(asset_path), req_headers)
     end
 
-    # @param [String] path 対象となるapp_garden.ymlへのパス。デフォルトは "config/app_garden.yml"
+    # @param [String] path 対象となるapp_garden.ymlへのパス。デフォルトは "config/app_garden.yml" あるいは "config/app_garden.yml.erb"
     # @return 成功した場合自身のオブジェクトを返します。
-    def load_app_garden(path = "config/app_garden.yml")
-      hash = YAML.load_file_with_erb(path)
+    def load_app_garden(path = nil)
+      path ||= Dir.glob("config/app_garden.yml*").first
+      raise ArgumentError, "file not found config/app_garden.yml* at #{Dir.pwd}" unless path
+
+      # hash = YAML.load_file_with_erb(path, binding: binding) # tengine_supportが対応したらこんな感じで書きたい
+      erb = ERB.new(IO.read(path))
+      erb.filename = path
+      text = erb.result(binding) # Libgss::FontanaをFontanaとしてアクセスできるようにしたいので、このbindingの指定が必要です
+      hash = YAML.load(text)
+
       self.consumer_secret = hash["consumer_secret"]
       if platform = hash["platform"]
         name = (platform["name"] || "").strip
