@@ -172,7 +172,13 @@ module Libgss
     def load_app_garden(path = nil)
       path ||= Dir.glob("config/app_garden.yml*").first
       raise ArgumentError, "file not found config/app_garden.yml* at #{Dir.pwd}" unless path
-      hash = YAML.load_file_with_erb(path)
+
+      # hash = YAML.load_file_with_erb(path, binding: binding) # tengine_supportが対応したらこんな感じで書きたい
+      erb = ERB.new(IO.read(path))
+      erb.filename = path
+      text = erb.result(binding) # Libgss::FontanaをFontanaとしてアクセスできるようにしたいので、このbindingの指定が必要です
+      hash = YAML.load(text)
+
       self.consumer_secret = hash["consumer_secret"]
       if platform = hash["platform"]
         name = (platform["name"] || "").strip
