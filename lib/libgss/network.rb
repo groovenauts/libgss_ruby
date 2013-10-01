@@ -261,9 +261,9 @@ module Libgss
       end
     end
 
-    def build_https_url(uri, port)
+    def build_https_url(uri, port = nil)
       uri.scheme = "https"
-      uri.port = (port || (uri.port == PRODUCTION_HTTP_PORT) ? PRODUCTION_HTTPS_PORT : uri.port + 1)
+      uri.port = port || (uri.port == PRODUCTION_HTTP_PORT ? PRODUCTION_HTTPS_PORT : uri.port + 1)
       uri.to_s
     end
 
