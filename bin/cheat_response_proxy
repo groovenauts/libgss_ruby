@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+require 'webrick'
+require 'webrick/httpproxy'
+require 'uri'
+
+handler = Proc.new do |req, res|
+  puts "=" * 100
+  puts req.request_uri.to_s
+  puts req.path
+  puts res.body.to_s
+  if req.path == "/api/1.0.0/actions.json"
+    # server_timeの戻り値を10日先に書き換えている
+    res.body.gsub!(/\"result\":\s*(\d+)/){ "\"result\":%d" % ($1.to_i + 10 * 24 * 60 * 60) }
+  end
+  puts "-" * 100
+end
+
+s = WEBrick::HTTPProxyServer.new(
+  :Port => 5000,
+  :Logger => WEBrick::Log::new($stdout, WEBrick::Log::DEBUG),
+  :ProxyVia => false,
+  :ProxyContentHandler => handler
+)
+
+Signal.trap('INT'){ s.shutdown }
+s.start
