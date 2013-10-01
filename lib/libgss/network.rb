@@ -61,16 +61,17 @@ module Libgss
     # @option options [Boolean] :skip_verifying_signature レスポンスのシグネチャキーによる署名の検証をスキップするかどうか
     # @option options [Integer] :device_type_cd GSS/fontanaに登録されたデバイス種別
     # @option options [String]  :client_version GSS/fontanaに登録されたクライアントリリースのバージョン
+    # @option options [Integer] :https_port HTTPSで接続する際の接続先のポート番号
     def initialize(base_url_or_host, options = {})
       @ssl_disabled = options.delete(:ssl_disabled)
       if base_url_or_host =~ URI.regexp
         @base_url = base_url_or_host.sub(/\/\Z/, '')
         uri = URI.parse(@base_url)
-        @ssl_base_url = build_https_url(uri)
+        @ssl_base_url = build_https_url(uri, options[:https_port])
       else
         uri = URI::Generic.build({scheme: "http", host: base_url_or_host, port: DEFAULT_HTTP_PORT}.update(options))
         @base_url = uri.to_s
-        @ssl_base_url = build_https_url(uri)
+        @ssl_base_url = build_https_url(uri, options[:https_port])
       end
       @ssl_base_url = @base_url if @ssl_disabled
       @platform  = options[:platform] || "fontana"
@@ -260,9 +261,9 @@ module Libgss
       end
     end
 
-    def build_https_url(uri)
+    def build_https_url(uri, port = nil)
       uri.scheme = "https"
-      uri.port = (uri.port == PRODUCTION_HTTP_PORT) ? PRODUCTION_HTTPS_PORT : uri.port + 1
+      uri.port = port || (uri.port == PRODUCTION_HTTP_PORT ? PRODUCTION_HTTPS_PORT : uri.port + 1)
       uri.to_s
     end
 
