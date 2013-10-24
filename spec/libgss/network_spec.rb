@@ -2,6 +2,7 @@
 require 'spec_helper'
 
 require 'uuid'
+require 'securerandom'
 
 describe Libgss::Network do
 
@@ -123,6 +124,118 @@ describe Libgss::Network do
           network.auth_token.should == nil
           network.signature_key.should == nil
           expect{ network.login! }.to raise_error(Libgss::Network::Error)
+        end
+      end
+
+      [300, 400, 500].map{|n| (1..10).map{|i| n + i} }.flatten.each do |status_code|
+        context "status_code is #{status_code}" do
+          before do
+            res = double(:reponse)
+            res.should_receive(:status).and_return(status_code)
+            HTTPClient.any_instance.should_receive(:post).and_return(res)
+          end
+          it_should_behave_like "Libgss::Network#login failure"
+        end
+      end
+
+      context "JSON parse Error" do
+        before do
+          $stderr.stub(:puts).with(an_instance_of(String)) # $stderrにメッセージが出力されます
+          res = double(:reponse)
+          res.stub(:status).and_return(200)
+          res.should_receive(:content).twice.and_return("invalid JSON format string")
+          HTTPClient.any_instance.should_receive(:post).and_return(res)
+        end
+
+        it_should_behave_like "Libgss::Network#login failure"
+      end
+
+    end
+
+  end
+
+  describe "#login(with Cathedral)" do
+    before do
+      @gdkey = SecureRandom.uuid
+      @extras = {udkey: SecureRandom.uuid, gdkey: @gdkey, device_cd: "10"}
+      network.player_id = nil
+      network.platform = 'cathedral'
+      network.client_version = "2013073101"
+      network.device_type_cd = 1
+    end
+
+    context "success" do
+      shared_examples_for "Libgss::Network#login(cathedral) success" do |block, after_block = nil|
+        before(&block) if block
+        after(&after_block) if after_block
+
+        it do
+          network.platform.should eq 'cathedral'
+          network.auth_token.should eq nil
+          network.signature_key.should eq nil
+
+          res = network.login(@extras)
+          res.should eq true
+          network.auth_token.should_not eq nil
+          network.signature_key.should_not eq nil
+
+          req = network.new_action_request
+          req.get_by_player
+          req.send_request do |outputs|
+            outputs.should have(1).results
+            outputs[0].should have_key('result')
+            @result = outputs[0]['result']
+          end
+        end
+      end
+
+      it_should_behave_like("Libgss::Network#login(cathedral) success",
+        nil, Proc.new{
+          network.player_id.should eq @gdkey
+          @result['player_id'].should eq @gdkey
+        })
+
+      it_should_behave_like("Libgss::Network#login(cathedral) success",
+        Proc.new{ @extras = @extras.update({udkey: nil}) },
+        Proc.new{
+          network.player_id.should eq @gdkey
+          @result['player_id'].should eq @gdkey
+        })
+
+      it_should_behave_like("Libgss::Network#login(cathedral) success",
+        Proc.new{ @extras = @extras.update({device_cd: nil}) },
+        Proc.new{
+          network.player_id.should eq @gdkey
+          @result['player_id'].should eq @gdkey
+        })
+    end
+
+    context "failure with gdkey is brank" do
+      it "by using login" do
+        res = network.login({gdkey: nil})
+        network.auth_token.should == nil
+        network.signature_key.should == nil
+        res.should == false
+      end
+      it "by using login!" do
+        expect{ network.login!({gdkey: nil}) }.to raise_error(Libgss::Network::Error)
+      end
+    end
+
+    context "error" do
+      shared_examples_for "Libgss::Network#login failure" do
+        it "by using login"do
+          network.auth_token.should == nil
+          network.signature_key.should == nil
+          res = network.login(@extras)
+          network.auth_token.should == nil
+          network.signature_key.should == nil
+          res.should == false
+        end
+        it "by using login"do
+          network.auth_token.should == nil
+          network.signature_key.should == nil
+          expect{ network.login!(@extras) }.to raise_error(Libgss::Network::Error)
         end
       end
 
