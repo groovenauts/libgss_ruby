@@ -70,10 +70,11 @@ module Libgss
 
     # レスポンスの処理を行います
     def process_response(res, req_type)
-      case res.code.to_i
+      case res.status.to_i
       when 200..299 then # OK
       else
-        raise Error, "failed to send #{req_type}: [#{res.code}] #{res.content}"
+        # raise Error, "failed to send #{req_type}: [#{res.status}] #{res.content}"
+        raise ErrorResponse.build(res)
       end
       verify_signature(res) do |content|
         begin

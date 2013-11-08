@@ -139,8 +139,10 @@ module Libgss
     # @see #login
     # @return ログインに成功した場合は自身のオブジェクト返します。失敗した場合はLibgss::Network::Errorがraiseされます。
     def login!(extra = {})
-      case login_and_status(extra)
+      result = login_and_status(extra)
+      case result
       when 200...300 then return self
+      when ErrorResponse then raise result
       else raise Error, "Login Failure"
       end
     end
@@ -262,8 +264,10 @@ module Libgss
       result = res.status
       case result
       when 200...300 then # OK
-      when 300...600 then return result
-      else raise "invalid http status: #{res.status}"
+      when 300...600 then
+        return ErrorResponse.build(res)
+      else
+        raise InvalidResponse.new(result, "invalid http status")
       end
       begin
         obj = JSON.parse(res.content)
@@ -271,7 +275,7 @@ module Libgss
         return result
       rescue JSON::ParserError => e
         $stderr.puts("\e[31m[#{e.class}] #{e.message}\n#{res.content}")
-        return false
+        return e
       end
     end
 

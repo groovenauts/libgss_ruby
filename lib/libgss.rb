@@ -20,7 +20,41 @@ module Libgss
 
   MAX_RETRY_COUNT = (ENV["LIBGSS_MAX_RETRY_COUNT"] || 10).to_i
 
-  class Error < StandardError
+  class Error < StandardError; end
+  class ClientError < Error; end
+
+  class ErrorResponse < Error
+    class << self
+      def subclasses
+        @subclasses ||= []
+      end
+      def inherited(klass)
+        subclasses << klass
+      end
+      def build(res)
+        return nil if res.nil?
+        klass = subclasses.detect{|k| k.respond_to?(:match?) && k.match?(res)} || self
+        klass.new(res.status, res.content)
+      end
+    end
+
+    attr_reader :status
+    def initialize(status, message)
+      @status = status
+      super(message)
+    end
+  end
+
+  class InvalidResponse < ErrorResponse
+  end
+
+  class ServerBlockError < ErrorResponse
+    STATUS = 503
+    BODY = "api maintenance".freeze
+    def self.match?(res)
+      res.content.nil? ? false :
+        (res.status == STATUS) && (res.content.strip == BODY)
+    end
   end
 
   class << self
