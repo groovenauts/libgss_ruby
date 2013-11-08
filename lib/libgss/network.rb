@@ -12,8 +12,7 @@ module Libgss
 
   class Network
 
-    class Error < StandardError
-    end
+    Error = Libgss::Error
 
     attr_reader :base_url
     attr_reader :ssl_base_url
@@ -105,8 +104,8 @@ module Libgss
     # @param [Hash] extra オプション
     # @option extra [Integer] :device_type デバイス種別
     # @option extra [Integer] :device_id デバイス識別子
-    # @return [Boolean] ログインに成功した場合はtrue、失敗した場合はfalse
-    def login(extra = {})
+    # @return [Integer, false, Error] 基本的にサーバが返したレスポンスのステータスを返しますが、200番台でも検証に失敗した場合などは、falseあるいは例外オブジェクトを返します。
+    def login_and_status(extra = {})
       @player_info[:id] = player_id
       @player_info.update(extra)
       attrs = @player_info.each_with_object({}){|(k,v), d| d[ "player[#{k}]" ] = v }
@@ -124,11 +123,26 @@ module Libgss
     # GSSサーバに接続してログインの検証と処理を行います。
     #
     # @param [Hash] extra オプション
+    # @option extra [Integer] :device_type デバイス種別
+    # @option extra [Integer] :device_id デバイス識別子
+    # @return [Boolean] ログインに成功した場合はtrue、失敗した場合はfalse
+    def login(extra = {})
+      case login_and_status(extra)
+      when 200...300 then true
+      else false
+      end
+    end
+
+    # GSSサーバに接続してログインの検証と処理を行います。
+    #
+    # @param [Hash] extra オプション
     # @see #login
     # @return ログインに成功した場合は自身のオブジェクト返します。失敗した場合はLibgss::Network::Errorがraiseされます。
     def login!(extra = {})
-      raise Error, "Login Failure" unless login(extra)
-      self
+      case login_and_status(extra)
+      when 200...300 then return self
+      else raise Error, "Login Failure"
+      end
     end
 
     # @return [Boolean] コンストラクタに指定されたignore_signature_keyを返します
@@ -245,16 +259,16 @@ module Libgss
     end
 
     def process_json_response(res)
-      case res.status
+      result = res.status
+      case result
       when 200...300 then # OK
-      when 300...400 then return false # リダイレクト対応はしません
-      when 400...500 then return false
-      when 500...600 then return false
+      when 300...600 then return result
       else raise "invalid http status: #{res.status}"
       end
       begin
         obj = JSON.parse(res.content)
-        return yield(obj)
+        yield(obj)
+        return result
       rescue JSON::ParserError => e
         $stderr.puts("\e[31m[#{e.class}] #{e.message}\n#{res.content}")
         return false

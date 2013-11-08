@@ -20,6 +20,9 @@ module Libgss
 
   MAX_RETRY_COUNT = (ENV["LIBGSS_MAX_RETRY_COUNT"] || 10).to_i
 
+  class Error < StandardError
+  end
+
   class << self
 
     def with_retry(name)
