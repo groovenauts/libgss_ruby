@@ -130,8 +130,7 @@ describe Libgss::Network do
       [300, 400, 500].map{|n| (1..10).map{|i| n + i} }.flatten.each do |status_code|
         context "status_code is #{status_code}" do
           before do
-            res = double(:reponse)
-            res.should_receive(:status).and_return(status_code)
+            res = double(:reponse, status: status_code, content: nil)
             HTTPClient.any_instance.should_receive(:post).and_return(res)
           end
           it_should_behave_like "Libgss::Network#login failure"
@@ -141,9 +140,7 @@ describe Libgss::Network do
       context "JSON parse Error" do
         before do
           $stderr.stub(:puts).with(an_instance_of(String)) # $stderrにメッセージが出力されます
-          res = double(:reponse)
-          res.stub(:status).and_return(200)
-          res.should_receive(:content).twice.and_return("invalid JSON format string")
+          res = double(:reponse, status: 200, content: "invalid JSON format string")
           HTTPClient.any_instance.should_receive(:post).and_return(res)
         end
 
@@ -242,8 +239,7 @@ describe Libgss::Network do
       [300, 400, 500].map{|n| (1..10).map{|i| n + i} }.flatten.each do |status_code|
         context "status_code is #{status_code}" do
           before do
-            res = double(:reponse)
-            res.should_receive(:status).and_return(status_code)
+            res = double(:reponse, {status: status_code, content: nil})
             HTTPClient.any_instance.should_receive(:post).and_return(res)
           end
           it_should_behave_like "Libgss::Network#login failure"
@@ -253,9 +249,7 @@ describe Libgss::Network do
       context "JSON parse Error" do
         before do
           $stderr.stub(:puts).with(an_instance_of(String)) # $stderrにメッセージが出力されます
-          res = double(:reponse)
-          res.stub(:status).and_return(200)
-          res.should_receive(:content).twice.and_return("invalid JSON format string")
+          res = double(:reponse, {status: 200, content: "invalid JSON format string"})
           HTTPClient.any_instance.should_receive(:post).and_return(res)
         end
 
@@ -351,13 +345,13 @@ describe Libgss::Network do
       it "with empty oauth_nonce" do
         proc{
           spec_with_network_options({oauth_nonce: ''})
-        }.should raise_error(::Libgss::ActionRequest::Error)
+        }.should raise_error(::Libgss::ErrorResponse)
       end
       it "with old oauth_timestamp" do
         time = Time.local(2013,7,1,12,0,0)
         proc{
           spec_with_network_options({oauth_timestamp: time.to_i})
-        }.should raise_error(::Libgss::ActionRequest::Error)
+        }.should raise_error(::Libgss::ErrorResponse)
       end
     end
   end
