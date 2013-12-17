@@ -108,9 +108,10 @@ module Libgss
     def login_and_status(extra = {})
       @player_info[:id] = player_id
       @player_info.update(extra)
-      attrs = @player_info.each_with_object({}){|(k,v), d| d[ "player[#{k}]" ] = v }
+      # attrs = @player_info.each_with_object({}){|(k,v), d| d[ "player[#{k}]" ] = v }
+      json = {"player" => @player_info}.to_json
       res = Libgss.with_retry("login") do
-        @httpclient.post(login_url, attrs, req_headers)
+        @httpclient.post(login_url, json, req_headers)
       end
       process_json_response(res) do |obj|
         @player_id ||= obj["player_id"]
@@ -243,6 +244,7 @@ module Libgss
 
     def req_headers
       {
+        "Content-Type" => "application/json",
         "X-Device-Type" => device_type_cd,
         "X-Client-Version" => client_version,
       }
