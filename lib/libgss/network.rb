@@ -51,6 +51,7 @@ module Libgss
     # @option options [String]  :platform 接続先のGSSサーバの認証のプラットフォーム。デフォルトは"fontana"。
     # @option options [String]  :api_version APIのバージョン。デフォルトは "1.0.0"
     # @option options [String]  :player_id 接続に使用するプレイヤのID
+    # @option options [Hash]    :player_info pf_player_info として格納されるはずの諸情報
     # @option options [String]  :consumer_secret GSSサーバとクライアントの間で行う署名の検証に使用される文字列。
     # @option options [Boolean] :ignore_oauth_nonce OAuth認証時にoauth_nonceとoauth_timestampを使用しないかどうか。
     # @option options [String]  :oauth_nonce OAuth認証のoauth_nonceパラメータ
@@ -108,9 +109,10 @@ module Libgss
     def login_and_status(extra = {})
       @player_info[:id] = player_id
       @player_info.update(extra)
-      attrs = @player_info.each_with_object({}){|(k,v), d| d[ "player[#{k}]" ] = v }
+      # attrs = @player_info.each_with_object({}){|(k,v), d| d[ "player[#{k}]" ] = v }
+      json = {"player" => @player_info}.to_json
       res = Libgss.with_retry("login") do
-        @httpclient.post(login_url, attrs, req_headers)
+        @httpclient.post(login_url, json, req_headers)
       end
       process_json_response(res) do |obj|
         @player_id ||= obj["player_id"]
@@ -243,6 +245,7 @@ module Libgss
 
     def req_headers
       {
+        "Content-Type" => "application/json",
         "X-Device-Type" => device_type_cd,
         "X-Client-Version" => client_version,
       }
