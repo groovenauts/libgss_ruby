@@ -68,8 +68,7 @@ module Libgss
         @base_url = base_url_or_host.sub(/\/\Z/, '')
         uri = URI.parse(@base_url)
       else
-        dirs = [".", "./config", ENV['HOME']].join(",")
-        if config_path = Dir["{#{dirs}}/.libgss.yml"].select{|path| File.readable?(path)}.first
+        if config_path = search_file(".libgss.yml")
           config = YAML.load_file_with_erb(config_path)
           options = config[base_url_or_host.to_s].deep_symbolize_keys.update(options)
         end
@@ -100,6 +99,12 @@ module Libgss
 
       load_app_garden
     end
+
+    def search_file(basename)
+      dirs = [".", "./config", ENV['HOME']].join(",")
+      Dir["{#{dirs}}/#{basename}"].select{|path| File.readable?(path)}.first
+    end
+    private :search_file
 
     def inspect
       r = "#<#{self.class.name}:#{self.object_id} "
@@ -194,12 +199,16 @@ module Libgss
     end
 
     # @param [String] path 対象となるapp_garden.ymlへのパス。デフォルトは "config/app_garden.yml" あるいは "config/app_garden.yml.erb"
-    # @return 成功した場合自身のオブジェクトを返します。
+    # @return [Libgss::Network] selfを返します。
     def load_app_garden(path = nil)
-      path ||= Dir.glob("config/app_garden.yml*").first
-      raise ArgumentError, "file not found config/app_garden.yml* at #{Dir.pwd}" unless path
-
+      if path
+        raise ArgumentError, "file not found config/app_garden.yml* at #{Dir.pwd}" unless File.readable?(path)
+      else
+        path = search_file("app_garden.yml")
+        return self unless path
+      end
       # hash = YAML.load_file_with_erb(path, binding: binding) # tengine_supportが対応したらこんな感じで書きたい
+      puts "loading #{path}"
       erb = ERB.new(IO.read(path))
       erb.filename = path
       text = erb.result(binding) # Libgss::FontanaをFontanaとしてアクセスできるようにしたいので、このbindingの指定が必要です
@@ -212,7 +221,7 @@ module Libgss
           self.platform = name
         end
       end
-      self
+      return self
     end
 
     # device_idを生成します
