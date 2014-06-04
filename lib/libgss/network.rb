@@ -5,6 +5,7 @@ require 'httpclient'
 require 'json'
 require 'uri'
 require 'tengine/support/yaml_with_erb'
+require 'tengine/support/core_ext/hash/keys'
 
 require 'uuid'
 
@@ -63,16 +64,20 @@ module Libgss
     # @option options [String]  :client_version GSS/fontanaに登録されたクライアントリリースのバージョン
     # @option options [Integer] :https_port HTTPSで接続する際の接続先のポート番号
     def initialize(base_url_or_host, options = {})
-      @ssl_disabled = options.delete(:ssl_disabled)
       if base_url_or_host =~ URI.regexp
         @base_url = base_url_or_host.sub(/\/\Z/, '')
         uri = URI.parse(@base_url)
-        @ssl_base_url = build_https_url(uri, options[:https_port])
       else
+        dirs = [".", "./config", ENV['HOME']].join(",")
+        if config_path = Dir["{#{dirs}}/.libgss.yml"].select{|path| File.readable?(path)}.first
+          config = YAML.load_file_with_erb(config_path)
+          options = config[base_url_or_host.to_s].deep_symbolize_keys.update(options)
+        end
         uri = URI::Generic.build({scheme: "http", host: base_url_or_host, port: DEFAULT_HTTP_PORT}.update(options))
         @base_url = uri.to_s
-        @ssl_base_url = build_https_url(uri, options[:https_port])
       end
+      @ssl_base_url = build_https_url(uri, options[:https_port])
+      @ssl_disabled = options.delete(:ssl_disabled)
       @ssl_base_url = @base_url if @ssl_disabled
       @platform  = options[:platform] || "fontana"
       @api_version = options[:api_version] || "1.0.0"
@@ -92,6 +97,8 @@ module Libgss
 
       @httpclient = HTTPClient.new
       @httpclient.ssl_config.verify_mode = nil # 自己署名の証明書をOKにする
+
+      load_app_garden
     end
 
     def inspect
