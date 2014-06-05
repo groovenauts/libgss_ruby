@@ -161,6 +161,14 @@ module Libgss
       end
     end
 
+    # @return [Hash] サーバの諸情報を表すデータ
+    def status
+      res = Libgss.with_retry("status"){ @httpclient.get(status_url) }
+      process_json_response(res) do |obj|
+        return obj
+      end
+    end
+
     # @return [Boolean] コンストラクタに指定されたignore_signature_keyを返します
     def ignore_signature_key?
       @ignore_signature_key
@@ -331,6 +339,10 @@ module Libgss
     def protected_asset_url(asset_path)
       path = URI.encode(asset_path) # パラメータとして渡されるのでURLエンコードする必要がある
       @action_url ||= base_url + "/api/#{api_version}/assets?path=#{path}&auth_token=#{auth_token}"
+    end
+
+    def status_url
+      @status_url ||= base_url + "/api-server-status/all.json"
     end
   end
 
