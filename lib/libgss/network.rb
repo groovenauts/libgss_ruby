@@ -5,6 +5,7 @@ require 'httpclient'
 require 'json'
 require 'uri'
 require 'tengine/support/yaml_with_erb'
+require 'tengine/support/core_ext/hash/keys'
 
 require 'uuid'
 
@@ -63,16 +64,19 @@ module Libgss
     # @option options [String]  :client_version GSS/fontanaに登録されたクライアントリリースのバージョン
     # @option options [Integer] :https_port HTTPSで接続する際の接続先のポート番号
     def initialize(base_url_or_host, options = {})
-      @ssl_disabled = options.delete(:ssl_disabled)
       if base_url_or_host =~ URI.regexp
         @base_url = base_url_or_host.sub(/\/\Z/, '')
         uri = URI.parse(@base_url)
-        @ssl_base_url = build_https_url(uri, options[:https_port])
       else
+        if config_path = search_file(".libgss.yml")
+          config = YAML.load_file_with_erb(config_path)
+          options = config[base_url_or_host.to_s].deep_symbolize_keys.update(options)
+        end
         uri = URI::Generic.build({scheme: "http", host: base_url_or_host, port: DEFAULT_HTTP_PORT}.update(options))
         @base_url = uri.to_s
-        @ssl_base_url = build_https_url(uri, options[:https_port])
       end
+      @ssl_base_url = build_https_url(uri, options[:https_port])
+      @ssl_disabled = options.delete(:ssl_disabled)
       @ssl_base_url = @base_url if @ssl_disabled
       @platform  = options[:platform] || "fontana"
       @api_version = options[:api_version] || "1.0.0"
@@ -92,7 +96,15 @@ module Libgss
 
       @httpclient = HTTPClient.new
       @httpclient.ssl_config.verify_mode = nil # 自己署名の証明書をOKにする
+
+      load_app_garden
     end
+
+    def search_file(basename)
+      dirs = [".", "./config", ENV['HOME']].join(",")
+      Dir["{#{dirs}}/#{basename}"].select{|path| File.readable?(path)}.first
+    end
+    private :search_file
 
     def inspect
       r = "#<#{self.class.name}:#{self.object_id} "
@@ -149,6 +161,14 @@ module Libgss
       end
     end
 
+    # @return [Hash] サーバの諸情報を表すデータ
+    def status
+      res = Libgss.with_retry("status"){ @httpclient.get(status_url) }
+      process_json_response(res) do |obj|
+        return obj
+      end
+    end
+
     # @return [Boolean] コンストラクタに指定されたignore_signature_keyを返します
     def ignore_signature_key?
       @ignore_signature_key
@@ -187,12 +207,16 @@ module Libgss
     end
 
     # @param [String] path 対象となるapp_garden.ymlへのパス。デフォルトは "config/app_garden.yml" あるいは "config/app_garden.yml.erb"
-    # @return 成功した場合自身のオブジェクトを返します。
+    # @return [Libgss::Network] selfを返します。
     def load_app_garden(path = nil)
-      path ||= Dir.glob("config/app_garden.yml*").first
-      raise ArgumentError, "file not found config/app_garden.yml* at #{Dir.pwd}" unless path
-
+      if path
+        raise ArgumentError, "file not found config/app_garden.yml* at #{Dir.pwd}" unless File.readable?(path)
+      else
+        path = search_file("app_garden.yml")
+        return self unless path
+      end
       # hash = YAML.load_file_with_erb(path, binding: binding) # tengine_supportが対応したらこんな感じで書きたい
+      puts "loading #{path}"
       erb = ERB.new(IO.read(path))
       erb.filename = path
       text = erb.result(binding) # Libgss::FontanaをFontanaとしてアクセスできるようにしたいので、このbindingの指定が必要です
@@ -205,7 +229,7 @@ module Libgss
           self.platform = name
         end
       end
-      self
+      return self
     end
 
     # device_idを生成します
@@ -315,6 +339,10 @@ module Libgss
     def protected_asset_url(asset_path)
       path = URI.encode(asset_path) # パラメータとして渡されるのでURLエンコードする必要がある
       @action_url ||= base_url + "/api/#{api_version}/assets?path=#{path}&auth_token=#{auth_token}"
+    end
+
+    def status_url
+      @status_url ||= base_url + "/api-server-status/all.json"
     end
   end
 
