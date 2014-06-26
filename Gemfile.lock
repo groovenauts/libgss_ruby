@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    libgss (1.0.0.alpha1)
+    libgss (0.11.0)
       httpclient
       json
       oauth
