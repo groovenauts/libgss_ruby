@@ -206,13 +206,14 @@ module Libgss
       AssetRequest.new(@httpclient, protected_asset_url(asset_path), req_headers)
     end
 
-    # @param [String] path 対象となるapp_garden.ymlへのパス。デフォルトは "config/app_garden.yml" あるいは "config/app_garden.yml.erb"
+    # @param [String] path 対象となるapp_garden.ymlへのパス。デフォルトでは、カレントディレクトリおよびカレントディレクトリ/config および
+    #   ホームディレクトリから、"app_garden.yml" または "app_garden.yml.erb" ファイルを探します。
     # @return [Libgss::Network] selfを返します。
     def load_app_garden(path = nil)
       if path
-        raise ArgumentError, "file not found config/app_garden.yml* at #{Dir.pwd}" unless File.readable?(path)
+        raise ArgumentError, "file not found #{path} at #{Dir.pwd}" unless File.readable?(path)
       else
-        path = search_file("app_garden.yml")
+        path = search_file("app_garden.yml") || search_file("app_garden.yml.erb")
         return self unless path
       end
       # hash = YAML.load_file_with_erb(path, binding: binding) # tengine_supportが対応したらこんな感じで書きたい
