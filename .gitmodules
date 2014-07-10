@@ -1,3 +1,4 @@
 [submodule "fontana_sample"]
 	path = fontana_sample
 	url = git@github.com:groovenauts/fontana_sample.git
+	branch = develop
